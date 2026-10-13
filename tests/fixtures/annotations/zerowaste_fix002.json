@@ -1,0 +1,29 @@
+{
+  "image_id": "zerowaste_fix002",
+  "file": "tests/fixtures/images/zerowaste_fix002.jpg",
+  "source": "zerowaste",
+  "license": "Research use",
+  "width": 256,
+  "height": 192,
+  "split": "test",
+  "scene_context": "synthetic fixture, yellow background",
+  "caption": null,
+  "objects": [
+    {
+      "object_id": "o1",
+      "category": "box",
+      "material": "cardboard",
+      "condition": "torn",
+      "count": 1,
+      "location": "upper area",
+      "bbox": [60.0, 40.0, 60.0, 50.0],
+      "mask": null,
+      "caption": "torn cardboard box",
+      "sorting_action": "recycle_cardboard",
+      "instruction": null
+    }
+  ],
+  "candidates": [],
+  "status": "pending",
+  "review": null
+}

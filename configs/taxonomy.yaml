@@ -1,0 +1,232 @@
+# ---------------------------------------------------------------------------
+# WasteCap Canonical Taxonomy
+# Frozen after M0. Any changes require explicit approval.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Waste categories (16 canonical labels)
+# ---------------------------------------------------------------------------
+categories:
+  - id: 0
+    name: bottle
+    description: "Any bottle-shaped container (beverage, cleaning, condiment, etc.)"
+  - id: 1
+    name: can
+    description: "Metal beverage or food can"
+  - id: 2
+    name: cup
+    description: "Cup or glass, disposable or reusable"
+  - id: 3
+    name: carton
+    description: "Milk/juice cartons, Tetra Pak, gable-top"
+  - id: 4
+    name: bag
+    description: "Plastic or paper bags, including garbage bags"
+  - id: 5
+    name: wrapper
+    description: "Candy/snack wrappers, cling film, foil wrap"
+  - id: 6
+    name: container
+    description: "General food containers, tubs, trays, foam containers"
+  - id: 7
+    name: box
+    description: "Cardboard or paper boxes, packaging"
+  - id: 8
+    name: straw
+    description: "Drinking straws"
+  - id: 9
+    name: lid
+    description: "Bottle caps, jar lids, container lids"
+  - id: 10
+    name: tube
+    description: "Toothpaste tubes, cosmetic/pharmaceutical tubes"
+  - id: 11
+    name: food_waste
+    description: "Visible organic waste (fruit peel, food scraps, etc.)"
+  - id: 12
+    name: electronic
+    description: "Small e-waste: batteries, cables, phones, cartridges"
+  - id: 13
+    name: clothing
+    description: "Textile waste: fabric, clothes, shoes"
+  - id: 14
+    name: other
+    description: "Identifiable waste not fitting other categories; add free-text note"
+  - id: 15
+    name: unknown
+    description: "Object visible but category is unclear"
+
+# ---------------------------------------------------------------------------
+# Materials (9 values)
+# ---------------------------------------------------------------------------
+materials:
+  - plastic
+  - metal
+  - paper
+  - cardboard
+  - glass
+  - organic
+  - textile
+  - mixed
+  - unknown
+
+# ---------------------------------------------------------------------------
+# Conditions (6 values)
+# ---------------------------------------------------------------------------
+conditions:
+  - intact
+  - crushed
+  - torn
+  - dirty
+  - deformed
+  - partially_occluded
+
+# ---------------------------------------------------------------------------
+# Sorting actions (8 values)
+# recycle_cardboard is separate from recycle_paper — different bins.
+# ---------------------------------------------------------------------------
+sorting_actions:
+  - recycle_plastic
+  - recycle_metal
+  - recycle_paper
+  - recycle_cardboard
+  - recycle_glass
+  - compost
+  - landfill
+  - hazardous
+
+# ---------------------------------------------------------------------------
+# Default sorting action per (category, material) pair.
+# Used when the annotator has not explicitly set a sorting action.
+# Format: "category/material": sorting_action
+# ---------------------------------------------------------------------------
+default_sorting_action:
+  "bottle/plastic":    recycle_plastic
+  "bottle/glass":      recycle_glass
+  "bottle/unknown":    recycle_plastic   # plastic is most common default
+  "can/metal":         recycle_metal
+  "cup/plastic":       recycle_plastic
+  "cup/paper":         recycle_paper
+  "cup/unknown":       landfill
+  "carton/cardboard":  recycle_cardboard
+  "carton/mixed":      recycle_cardboard
+  "bag/plastic":       landfill          # most soft plastics not kerbside recyclable
+  "bag/paper":         recycle_paper
+  "wrapper/plastic":   landfill
+  "wrapper/mixed":     landfill
+  "container/plastic": recycle_plastic
+  "container/mixed":   landfill
+  "container/organic": compost
+  "box/cardboard":     recycle_cardboard
+  "box/paper":         recycle_paper
+  "straw/plastic":     landfill
+  "lid/plastic":       recycle_plastic
+  "lid/metal":         recycle_metal
+  "tube/plastic":      landfill
+  "tube/mixed":        landfill
+  "food_waste/organic": compost
+  "electronic/mixed":  hazardous
+  "clothing/textile":  landfill
+
+# ---------------------------------------------------------------------------
+# Source label mappings → canonical (category, material)
+# ---------------------------------------------------------------------------
+
+# TACO: 60-class two-level hierarchy
+# Format: taco_label: {category: ..., material: ...}
+taco:
+  # Bottles
+  "Clear plastic bottle":           {category: bottle,    material: plastic}
+  "Glass bottle":                   {category: bottle,    material: glass}
+  "Other plastic bottle":           {category: bottle,    material: plastic}
+  "Plastic bottle cap":             {category: lid,       material: plastic}
+  "Metal bottle cap":               {category: lid,       material: metal}
+  "Broken glass":                   {category: other,     material: glass}
+  # Cans
+  "Drink can":                      {category: can,       material: metal}
+  "Food can":                       {category: can,       material: metal}
+  "Aerosol":                        {category: container, material: metal}
+  # Cups
+  "Plastic cup":                    {category: cup,       material: plastic}
+  "Paper cup":                      {category: cup,       material: paper}
+  "Disposable plastic cup lid":     {category: lid,       material: plastic}
+  # Cartons
+  "Juice carton":                   {category: carton,    material: cardboard}
+  "Milk carton":                    {category: carton,    material: cardboard}
+  "Meal carton":                    {category: carton,    material: cardboard}
+  "Egg carton":                     {category: carton,    material: cardboard}
+  # Bags
+  "Plastic film":                   {category: bag,       material: plastic}
+  "Single-use carrier bag":         {category: bag,       material: plastic}
+  "Polypropylene bag":              {category: bag,       material: plastic}
+  "Plastic bag":                    {category: bag,       material: plastic}
+  "Garbage bag":                    {category: bag,       material: plastic}
+  "Paper bag":                      {category: bag,       material: paper}
+  "Plastified paper bag":           {category: bag,       material: mixed}
+  # Wrappers
+  "Crisp packet":                   {category: wrapper,   material: plastic}
+  "Sweet wrapper":                  {category: wrapper,   material: plastic}
+  "Candy bar":                      {category: wrapper,   material: plastic}
+  "Other plastic wrapper":          {category: wrapper,   material: plastic}
+  "Wrapping paper":                 {category: wrapper,   material: paper}
+  "Magazine paper":                 {category: wrapper,   material: paper}
+  "Toilet tube":                    {category: tube,      material: cardboard}
+  # Containers / food
+  "Foam food container":            {category: container, material: mixed}
+  "Tupperware":                     {category: container, material: plastic}
+  "Pizza box":                      {category: box,       material: cardboard}
+  "Cardboard":                      {category: box,       material: cardboard}
+  "Paper":                          {category: other,     material: paper}
+  "Newspaper":                      {category: other,     material: paper}
+  "Paper bag":                      {category: bag,       material: paper}
+  "Tissues":                        {category: other,     material: paper}
+  "Napkins":                        {category: other,     material: paper}
+  # Straws / cutlery
+  "Straw":                          {category: straw,     material: plastic}
+  "Plastic utensils":               {category: other,     material: plastic}
+  # Electronic / hazardous
+  "Battery":                        {category: electronic, material: mixed}
+  "Cigarette":                      {category: other,     material: mixed}
+  # Clothing
+  "Shoe":                           {category: clothing,  material: textile}
+  # Catch-all
+  "Pop tab":                        {category: lid,       material: metal}
+  "Scrap metal":                    {category: other,     material: metal}
+  "Rope - strings":                 {category: other,     material: mixed}
+  "Squeezable tube":                {category: tube,      material: plastic}
+  "Foam cup":                       {category: cup,       material: mixed}
+  "Other plastic":                  {category: other,     material: plastic}
+  "Other":                          {category: other,     material: unknown}
+  "Unlabelled litter":              {category: other,     material: unknown}
+
+# ZeroWaste: 4 classes
+zerowaste:
+  "rigid_plastic":  {category: container, material: plastic}
+  "cardboard":      {category: box,       material: cardboard}
+  "metal":          {category: can,       material: metal}
+  "soft_plastic":   {category: wrapper,   material: plastic}
+
+# COCO: relevant subset of 80 classes
+coco:
+  "bottle":         {category: bottle,    material: unknown}
+  "wine glass":     {category: bottle,    material: glass}
+  "cup":            {category: cup,       material: unknown}
+  "fork":           {category: other,     material: metal}
+  "knife":          {category: other,     material: metal}
+  "spoon":          {category: other,     material: metal}
+  "bowl":           {category: container, material: unknown}
+  "banana":         {category: food_waste, material: organic}
+  "apple":          {category: food_waste, material: organic}
+  "orange":         {category: food_waste, material: organic}
+  "broccoli":       {category: food_waste, material: organic}
+  "carrot":         {category: food_waste, material: organic}
+  "hot dog":        {category: food_waste, material: organic}
+  "pizza":          {category: food_waste, material: organic}
+  "donut":          {category: food_waste, material: organic}
+  "cake":           {category: food_waste, material: organic}
+  "backpack":       {category: bag,        material: textile}
+  "handbag":        {category: bag,        material: textile}
+  "suitcase":       {category: container,  material: mixed}
+  "cell phone":     {category: electronic, material: mixed}
+  "book":           {category: box,        material: paper}
+  "scissors":       {category: other,      material: metal}

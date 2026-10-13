@@ -1,0 +1,29 @@
+{
+  "image_id": "taco_fix001",
+  "file": "tests/fixtures/images/taco_fix001.jpg",
+  "source": "taco",
+  "license": "CC BY 4.0",
+  "width": 200,
+  "height": 200,
+  "split": "train",
+  "scene_context": "synthetic fixture, red background",
+  "caption": null,
+  "objects": [
+    {
+      "object_id": "o1",
+      "category": "bottle",
+      "material": "plastic",
+      "condition": "crushed",
+      "count": 1,
+      "location": "centre",
+      "bbox": [80.0, 60.0, 40.0, 30.0],
+      "mask": null,
+      "caption": "crushed plastic bottle",
+      "sorting_action": "recycle_plastic",
+      "instruction": null
+    }
+  ],
+  "candidates": [],
+  "status": "pending",
+  "review": null
+}

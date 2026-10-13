@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------------
+# WasteCap Model Configuration
+# Backends are selected via WASTECAP_BACKEND env var, never hard-coded.
+# ---------------------------------------------------------------------------
+
+mock:
+  display_name: "Mock (deterministic, no GPU)"
+  class: "wastecap.models.mock.MockModel"
+  supports_grounding: false
+  default_n: 3
+
+blip2:
+  display_name: "BLIP-2 OPT-2.7B"
+  class: "wastecap.models.blip2.Blip2Model"
+  hf_model_id: "Salesforce/blip2-opt-2.7b"
+  # Override with WASTECAP_QUANTIZE env var at runtime
+  default_quantize: "4bit"
+  default_device: "cuda"
+  max_new_tokens: 256
+  supports_grounding: false
+  default_n: 3
+
+qwen_vl:
+  display_name: "Qwen2.5-VL-3B"
+  class: "wastecap.models.qwen_vl.QwenVLModel"
+  hf_model_id: "Qwen/Qwen2.5-VL-3B-Instruct"
+  default_quantize: "4bit"
+  default_device: "cuda"
+  max_new_tokens: 512
+  supports_grounding: true   # returns bounding boxes in structured output
+  default_n: 3
+
+llava:
+  display_name: "LLaVA-1.5-7B (optional)"
+  class: "wastecap.models.llava.LlavaModel"
+  hf_model_id: "llava-hf/llava-1.5-7b-hf"
+  default_quantize: "4bit"
+  default_device: "cuda"
+  max_new_tokens: 512
+  supports_grounding: false
+  default_n: 3
+  optional: true   # not required; skip if VRAM insufficient

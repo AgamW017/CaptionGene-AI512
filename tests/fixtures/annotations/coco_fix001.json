@@ -1,0 +1,29 @@
+{
+  "image_id": "coco_fix001",
+  "file": "tests/fixtures/images/coco_fix001.jpg",
+  "source": "coco",
+  "license": "CC BY 4.0",
+  "width": 224,
+  "height": 224,
+  "split": "train",
+  "scene_context": "synthetic fixture, purple background",
+  "caption": null,
+  "objects": [
+    {
+      "object_id": "o1",
+      "category": "bottle",
+      "material": "unknown",
+      "condition": "intact",
+      "count": 1,
+      "location": "centre",
+      "bbox": [70.0, 70.0, 70.0, 70.0],
+      "mask": null,
+      "caption": "intact bottle",
+      "sorting_action": "recycle_plastic",
+      "instruction": null
+    }
+  ],
+  "candidates": [],
+  "status": "pending",
+  "review": null
+}

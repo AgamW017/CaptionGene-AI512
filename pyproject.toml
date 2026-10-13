@@ -1,0 +1,94 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wastecap"
+version = "0.1.0"
+description = "Waste image–caption dataset curation app and pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    # Core ML — installed separately in GPU environment (Colab/Kaggle).
+    # Pinned here for reproducibility; adjust for local CPU-only installs.
+    # torch, torchvision, transformers, accelerate, bitsandbytes, open_clip_torch
+    # are NOT installed by default to keep local setup fast.
+
+    # Data / schema
+    "pydantic==2.14.1",
+    "pydantic-core==2.50.1",
+    "pyyaml==6.0.2",
+    "numpy==2.3.1",
+    "Pillow==11.3.0",
+
+    # Dataset tools
+    # pycocotools: install separately if needed (C extension, may not build on all platforms)
+    # "pycocotools==2.0.8",
+
+    # App
+    "streamlit==1.45.1",
+    "altair==5.5.0",
+
+    # Storage / export
+    "pandas==2.3.1",
+]
+
+[project.optional-dependencies]
+ml = [
+    # Install this group on GPU machines (Colab/Kaggle).
+    # Versions here target CUDA 12.x environments.
+    "torch==2.14.1",
+    "torchvision==0.22.0",
+    "transformers==4.53.2",
+    "accelerate==1.8.1",
+    "bitsandbytes==0.47.0",
+    "open_clip_torch==2.32.0",
+]
+
+dev = [
+    "pytest==8.4.1",
+    "pytest-cov==6.2.1",
+    "ruff==0.12.2",
+]
+
+eval = [
+    # pycocoevalcap is installed from source; pin the commit here for reference.
+    # pip install git+https://github.com/tylin/coco-caption.git
+    "sacrebleu==2.5.1",    # BLEU fallback if pycocoevalcap unavailable
+]
+
+[project.scripts]
+wastecap = "wastecap.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+src = ["src"]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "ANN"]
+ignore = [
+    "ANN401",  # dynamically typed expressions (Any) are disallowed
+    "B008",    # do not perform function call in argument defaults (fine for Pydantic)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*"   = ["ANN", "S101"]
+"app/*"     = ["ANN"]
+"scripts/*" = ["ANN", "T201"]
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths  = ["tests"]
+addopts    = "-q --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]

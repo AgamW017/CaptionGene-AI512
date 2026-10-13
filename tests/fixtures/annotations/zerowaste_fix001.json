@@ -1,0 +1,32 @@
+{
+  "image_id": "zerowaste_fix001",
+  "file": "tests/fixtures/images/zerowaste_fix001.jpg",
+  "source": "zerowaste",
+  "license": "Research use",
+  "width": 200,
+  "height": 200,
+  "split": "train",
+  "scene_context": "synthetic fixture, green background",
+  "caption": null,
+  "objects": [
+    {
+      "object_id": "o1",
+      "category": "container",
+      "material": "plastic",
+      "condition": "intact",
+      "count": 1,
+      "location": "left side",
+      "bbox": [40.0, 80.0, 60.0, 50.0],
+      "mask": {
+        "type": "polygon",
+        "data": [[40.0, 80.0, 100.0, 80.0, 100.0, 130.0, 40.0, 130.0]]
+      },
+      "caption": "intact plastic container",
+      "sorting_action": "recycle_plastic",
+      "instruction": null
+    }
+  ],
+  "candidates": [],
+  "status": "pending",
+  "review": null
+}

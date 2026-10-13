@@ -1,0 +1,40 @@
+{
+  "image_id": "coco_fix002",
+  "file": "tests/fixtures/images/coco_fix002.jpg",
+  "source": "coco",
+  "license": "CC BY 4.0",
+  "width": 200,
+  "height": 200,
+  "split": "val",
+  "scene_context": "synthetic fixture, cyan background",
+  "caption": "intact paper cup on surface",
+  "objects": [
+    {
+      "object_id": "o1",
+      "category": "cup",
+      "material": "paper",
+      "condition": "intact",
+      "count": 1,
+      "location": "centre",
+      "bbox": [50.0, 50.0, 100.0, 100.0],
+      "mask": null,
+      "caption": "intact paper cup",
+      "sorting_action": "recycle_paper",
+      "instruction": null
+    }
+  ],
+  "candidates": [
+    {
+      "model": "mock",
+      "prompt_id": "default",
+      "text": "A paper cup sitting on a cyan surface.",
+      "clip_score": null,
+      "parse_failed": false,
+      "raw_parsed": {"caption": "A paper cup sitting on a cyan surface."},
+      "grounding_boxes": null,
+      "created_at": "2026-10-13T10:00:00+00:00"
+    }
+  ],
+  "status": "pending",
+  "review": null
+}
