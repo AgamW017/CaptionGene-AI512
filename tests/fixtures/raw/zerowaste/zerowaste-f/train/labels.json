@@ -1,0 +1,128 @@
+{
+  "categories": [
+    {
+      "id": 1,
+      "name": "rigid_plastic"
+    },
+    {
+      "id": 2,
+      "name": "cardboard"
+    },
+    {
+      "id": 3,
+      "name": "metal"
+    },
+    {
+      "id": 4,
+      "name": "soft_plastic"
+    }
+  ],
+  "images": [
+    {
+      "id": 1,
+      "file_name": "img_0000.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "id": 2,
+      "file_name": "img_0001.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "id": 3,
+      "file_name": "img_0002.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "id": 4,
+      "file_name": "img_0003.png",
+      "width": 256,
+      "height": 256
+    }
+  ],
+  "annotations": [
+    {
+      "id": 1,
+      "image_id": 1,
+      "category_id": 1,
+      "bbox": [
+        20.0,
+        20.0,
+        100.0,
+        100.0
+      ],
+      "segmentation": {
+        "counts": "abc123",
+        "size": [
+          256,
+          256
+        ]
+      },
+      "area": 10000.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 2,
+      "image_id": 2,
+      "category_id": 2,
+      "bbox": [
+        20.0,
+        20.0,
+        100.0,
+        100.0
+      ],
+      "segmentation": {
+        "counts": "abc123",
+        "size": [
+          256,
+          256
+        ]
+      },
+      "area": 10000.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 3,
+      "image_id": 3,
+      "category_id": 3,
+      "bbox": [
+        20.0,
+        20.0,
+        100.0,
+        100.0
+      ],
+      "segmentation": {
+        "counts": "abc123",
+        "size": [
+          256,
+          256
+        ]
+      },
+      "area": 10000.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 4,
+      "image_id": 4,
+      "category_id": 4,
+      "bbox": [
+        20.0,
+        20.0,
+        100.0,
+        100.0
+      ],
+      "segmentation": {
+        "counts": "abc123",
+        "size": [
+          256,
+          256
+        ]
+      },
+      "area": 10000.0,
+      "iscrowd": 0
+    }
+  ]
+}

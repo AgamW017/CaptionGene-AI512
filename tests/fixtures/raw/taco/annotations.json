@@ -1,0 +1,294 @@
+{
+  "info": {
+    "description": "TACO fixture"
+  },
+  "licenses": [
+    {
+      "id": 1,
+      "name": "CC BY 4.0"
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "Clear plastic bottle",
+      "supercategory": "Bottle"
+    },
+    {
+      "id": 2,
+      "name": "Drink can",
+      "supercategory": "Can"
+    },
+    {
+      "id": 3,
+      "name": "Crisp packet",
+      "supercategory": "Wrapper"
+    },
+    {
+      "id": 4,
+      "name": "Unlabelled litter",
+      "supercategory": "Other"
+    }
+  ],
+  "images": [
+    {
+      "id": 1,
+      "file_name": "batch_1/000001.jpg",
+      "width": 320,
+      "height": 240,
+      "flickr_url": "https://example.com/img1.jpg",
+      "license": 1
+    },
+    {
+      "id": 2,
+      "file_name": "batch_1/000002.jpg",
+      "width": 320,
+      "height": 240,
+      "flickr_url": "https://example.com/img2.jpg",
+      "license": 1
+    },
+    {
+      "id": 3,
+      "file_name": "batch_1/000003.jpg",
+      "width": 320,
+      "height": 240,
+      "flickr_url": "https://example.com/img3.jpg",
+      "license": 1
+    },
+    {
+      "id": 4,
+      "file_name": "batch_1/000004.jpg",
+      "width": 320,
+      "height": 240,
+      "flickr_url": "https://example.com/img4.jpg",
+      "license": 1
+    },
+    {
+      "id": 5,
+      "file_name": "batch_1/000005.jpg",
+      "width": 320,
+      "height": 240,
+      "flickr_url": "https://example.com/img5.jpg",
+      "license": 1
+    },
+    {
+      "id": 6,
+      "file_name": "batch_1/tiny.jpg",
+      "width": 80,
+      "height": 80,
+      "flickr_url": "https://example.com/tiny.jpg",
+      "license": 1
+    }
+  ],
+  "annotations": [
+    {
+      "id": 1,
+      "image_id": 1,
+      "category_id": 1,
+      "bbox": [
+        10.0,
+        10.0,
+        80.0,
+        120.0
+      ],
+      "segmentation": [
+        [
+          10.0,
+          10.0,
+          90.0,
+          10.0,
+          90.0,
+          130.0,
+          10.0,
+          130.0
+        ]
+      ],
+      "area": 9600.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 2,
+      "image_id": 1,
+      "category_id": 2,
+      "bbox": [
+        100.0,
+        50.0,
+        60.0,
+        80.0
+      ],
+      "segmentation": [],
+      "area": 4800.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 3,
+      "image_id": 2,
+      "category_id": 1,
+      "bbox": [
+        10.0,
+        10.0,
+        80.0,
+        120.0
+      ],
+      "segmentation": [
+        [
+          10.0,
+          10.0,
+          90.0,
+          10.0,
+          90.0,
+          130.0,
+          10.0,
+          130.0
+        ]
+      ],
+      "area": 9600.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 4,
+      "image_id": 2,
+      "category_id": 2,
+      "bbox": [
+        100.0,
+        50.0,
+        60.0,
+        80.0
+      ],
+      "segmentation": [],
+      "area": 4800.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 5,
+      "image_id": 3,
+      "category_id": 1,
+      "bbox": [
+        10.0,
+        10.0,
+        80.0,
+        120.0
+      ],
+      "segmentation": [
+        [
+          10.0,
+          10.0,
+          90.0,
+          10.0,
+          90.0,
+          130.0,
+          10.0,
+          130.0
+        ]
+      ],
+      "area": 9600.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 6,
+      "image_id": 3,
+      "category_id": 2,
+      "bbox": [
+        100.0,
+        50.0,
+        60.0,
+        80.0
+      ],
+      "segmentation": [],
+      "area": 4800.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 7,
+      "image_id": 4,
+      "category_id": 1,
+      "bbox": [
+        10.0,
+        10.0,
+        80.0,
+        120.0
+      ],
+      "segmentation": [
+        [
+          10.0,
+          10.0,
+          90.0,
+          10.0,
+          90.0,
+          130.0,
+          10.0,
+          130.0
+        ]
+      ],
+      "area": 9600.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 8,
+      "image_id": 4,
+      "category_id": 2,
+      "bbox": [
+        100.0,
+        50.0,
+        60.0,
+        80.0
+      ],
+      "segmentation": [],
+      "area": 4800.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 9,
+      "image_id": 5,
+      "category_id": 1,
+      "bbox": [
+        10.0,
+        10.0,
+        80.0,
+        120.0
+      ],
+      "segmentation": [
+        [
+          10.0,
+          10.0,
+          90.0,
+          10.0,
+          90.0,
+          130.0,
+          10.0,
+          130.0
+        ]
+      ],
+      "area": 9600.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 10,
+      "image_id": 5,
+      "category_id": 2,
+      "bbox": [
+        100.0,
+        50.0,
+        60.0,
+        80.0
+      ],
+      "segmentation": [],
+      "area": 4800.0,
+      "iscrowd": 0
+    },
+    {
+      "id": 11,
+      "image_id": 6,
+      "category_id": 3,
+      "bbox": [
+        5.0,
+        5.0,
+        30.0,
+        30.0
+      ],
+      "segmentation": [],
+      "area": 900.0,
+      "iscrowd": 0
+    }
+  ]
+}
