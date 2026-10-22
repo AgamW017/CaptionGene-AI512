@@ -1,0 +1,33 @@
+# ---------------------------------------------------------------------------
+# BLIP-2 OPT-2.7B prompt templates.
+#
+# BLIP-2 with OPT is an autoregressive decoder. It handles plain-text
+# prompts but tends to produce shorter outputs. We ask for JSON but use
+# a slightly more directive framing and keep the schema compact.
+# BLIP-2 does NOT support grounding (no bounding box output).
+# ---------------------------------------------------------------------------
+
+scene_level:
+  id: blip2_scene_v1
+  description: "BLIP-2 scene-level structured caption"
+  template: |
+    Question: Describe the waste objects in this image as JSON.
+    Use this exact format:
+    {"objects":[{"object_id":"o1","category":"bottle","material":"plastic","condition":"crushed","count":1,"location":"centre","caption":"crushed plastic bottle"}],"scene_context":"outdoor, cluttered"}
+    Categories: bottle|can|cup|carton|bag|wrapper|container|box|straw|lid|tube|food_waste|electronic|clothing|other|unknown
+    Materials: plastic|metal|paper|cardboard|glass|organic|textile|mixed|unknown
+    Conditions: intact|crushed|torn|dirty|deformed|partially_occluded
+    Only describe clearly visible objects. Use unknown when unsure.
+    Answer:
+
+object_level:
+  id: blip2_object_v1
+  description: "BLIP-2 object-level structured caption for a cropped region"
+  template: |
+    Question: Describe this single waste object as JSON.
+    Use this exact format:
+    {{"object_id":"{object_id}","category":"bottle","material":"plastic","condition":"intact","count":1,"location":"cropped region","caption":"intact plastic bottle"}}
+    Categories: bottle|can|cup|carton|bag|wrapper|container|box|straw|lid|tube|food_waste|electronic|clothing|other|unknown
+    Materials: plastic|metal|paper|cardboard|glass|organic|textile|mixed|unknown
+    Conditions: intact|crushed|torn|dirty|deformed|partially_occluded
+    Answer:

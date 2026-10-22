@@ -1,0 +1,54 @@
+# ---------------------------------------------------------------------------
+# Default prompt templates (model-agnostic base).
+# Model-specific files (blip2.yaml, qwen_vl.yaml) override these.
+# ---------------------------------------------------------------------------
+
+# scene_level: applied to the full image
+scene_level:
+  id: scene_level_v1
+  description: "Ask for a structured JSON scene description"
+  template: |
+    You are analyzing a waste image for a recycling dataset.
+    Respond with ONLY valid JSON matching this schema exactly:
+    {
+      "objects": [
+        {
+          "object_id": "o1",
+          "category": "<one of: bottle|can|cup|carton|bag|wrapper|container|box|straw|lid|tube|food_waste|electronic|clothing|other|unknown>",
+          "material": "<one of: plastic|metal|paper|cardboard|glass|organic|textile|mixed|unknown>",
+          "condition": "<one of: intact|crushed|torn|dirty|deformed|partially_occluded>",
+          "count": 1,
+          "location": "<free text: e.g. lower left, next to a can>",
+          "caption": "<condition> <material> <object>, e.g. crushed plastic bottle on grass"
+        }
+      ],
+      "scene_context": "<one sentence on clutter level, occlusion, and surroundings>"
+    }
+    Rules:
+    - Only describe objects that are clearly visible. Do not guess.
+    - Use "unknown" for material or category if unclear.
+    - Captions follow this pattern: <condition> <material> <object noun>.
+    - scene_context is one sentence maximum.
+    - Do not add any text before or after the JSON.
+
+# object_level: applied to a cropped region containing a single object
+object_level:
+  id: object_level_v1
+  description: "Ask for a structured JSON description of a single cropped waste object"
+  template: |
+    You are analyzing a cropped image of a single waste object for a recycling dataset.
+    Respond with ONLY valid JSON matching this schema exactly:
+    {
+      "object_id": "{object_id}",
+      "category": "<one of: bottle|can|cup|carton|bag|wrapper|container|box|straw|lid|tube|food_waste|electronic|clothing|other|unknown>",
+      "material": "<one of: plastic|metal|paper|cardboard|glass|organic|textile|mixed|unknown>",
+      "condition": "<one of: intact|crushed|torn|dirty|deformed|partially_occluded>",
+      "count": 1,
+      "location": "cropped region",
+      "caption": "<condition> <material> <object>"
+    }
+    Rules:
+    - Only describe what is visible in this crop. Do not guess.
+    - Use "unknown" for material or category if unclear.
+    - Caption must follow: <condition> <material> <object noun>.
+    - Do not add any text before or after the JSON.

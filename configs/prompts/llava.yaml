@@ -1,0 +1,25 @@
+# ---------------------------------------------------------------------------
+# LLaVA-1.5-7B prompt templates (optional backend).
+# LLaVA uses the Vicuna instruction format: USER: ... ASSISTANT:
+# ---------------------------------------------------------------------------
+
+scene_level:
+  id: llava_scene_v1
+  description: "LLaVA scene-level structured caption"
+  template: |
+    USER: <image>
+    Analyze this waste image and respond with ONLY valid JSON:
+    {"objects":[{"object_id":"o1","category":"bottle","material":"plastic","condition":"intact","count":1,"location":"centre","caption":"intact plastic bottle"}],"scene_context":"outdoor, low clutter"}
+    Categories: bottle|can|cup|carton|bag|wrapper|container|box|straw|lid|tube|food_waste|electronic|clothing|other|unknown
+    Materials: plastic|metal|paper|cardboard|glass|organic|textile|mixed|unknown
+    Conditions: intact|crushed|torn|dirty|deformed|partially_occluded
+    ASSISTANT:
+
+object_level:
+  id: llava_object_v1
+  description: "LLaVA object-level structured caption"
+  template: |
+    USER: <image>
+    Describe this single waste object (id: {object_id}) as JSON only:
+    {{"object_id":"{object_id}","category":"bottle","material":"plastic","condition":"intact","count":1,"location":"cropped region","caption":"intact plastic bottle"}}
+    ASSISTANT:

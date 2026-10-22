@@ -1,0 +1,15 @@
+# ---------------------------------------------------------------------------
+# Mock model prompt templates (used in tests and local dev without GPU).
+# The MockModel ignores the actual template text and returns fixture data,
+# but prompt_id is stored on each Candidate for traceability.
+# ---------------------------------------------------------------------------
+
+scene_level:
+  id: mock_scene_v1
+  description: "Mock scene-level prompt (ignored by MockModel, id is stored)"
+  template: "Describe all waste objects in JSON."
+
+object_level:
+  id: mock_object_v1
+  description: "Mock object-level prompt"
+  template: "Describe this waste object with object_id {object_id} in JSON."

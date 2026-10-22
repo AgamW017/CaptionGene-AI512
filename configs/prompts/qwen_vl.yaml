@@ -1,0 +1,65 @@
+# ---------------------------------------------------------------------------
+# Qwen2.5-VL-3B-Instruct prompt templates.
+#
+# Qwen2.5-VL is an instruction-tuned chat model that:
+# - Accepts system + user message pairs (chat format)
+# - Can return bounding boxes in its grounding format:
+#   <ref>object</ref><box>[[x1,y1,x2,y2]]</box>
+#   (coordinates are 0-999 in Qwen's normalised space)
+# - Handles longer, richer outputs than BLIP-2
+#
+# We ask for JSON output + optionally trigger grounding on scene_level.
+# Grounding boxes are parsed from the raw text and stored in
+# Candidate.grounding_boxes for later IoU evaluation (NOT as ground truth).
+# ---------------------------------------------------------------------------
+
+scene_level:
+  id: qwen_scene_v1
+  description: "Qwen2.5-VL scene-level structured caption with grounding"
+  system: |
+    You are an expert waste classification assistant for a recycling dataset.
+    You always respond with valid JSON. Never add explanations outside the JSON.
+  template: |
+    Analyze this waste image and describe all visible waste objects.
+    Respond with ONLY valid JSON in this exact schema:
+    {
+      "objects": [
+        {
+          "object_id": "o1",
+          "category": "<bottle|can|cup|carton|bag|wrapper|container|box|straw|lid|tube|food_waste|electronic|clothing|other|unknown>",
+          "material": "<plastic|metal|paper|cardboard|glass|organic|textile|mixed|unknown>",
+          "condition": "<intact|crushed|torn|dirty|deformed|partially_occluded>",
+          "count": 1,
+          "location": "<spatial description>",
+          "caption": "<condition> <material> <object>"
+        }
+      ],
+      "scene_context": "<one sentence on clutter, occlusion, surroundings>"
+    }
+    - Only include clearly visible objects
+    - Use "unknown" when uncertain about material or category
+    - Caption pattern: <condition> <material> <object noun>
+    - scene_context is one sentence
+    - Return ONLY the JSON, nothing else
+
+object_level:
+  id: qwen_object_v1
+  description: "Qwen2.5-VL object-level caption for a single cropped waste object"
+  system: |
+    You are an expert waste classification assistant.
+    You always respond with valid JSON. Never add explanations outside the JSON.
+  template: |
+    This is a cropped image of a single waste object with object_id "{object_id}".
+    Respond with ONLY valid JSON in this exact schema:
+    {{
+      "object_id": "{object_id}",
+      "category": "<bottle|can|cup|carton|bag|wrapper|container|box|straw|lid|tube|food_waste|electronic|clothing|other|unknown>",
+      "material": "<plastic|metal|paper|cardboard|glass|organic|textile|mixed|unknown>",
+      "condition": "<intact|crushed|torn|dirty|deformed|partially_occluded>",
+      "count": 1,
+      "location": "cropped region",
+      "caption": "<condition> <material> <object>"
+    }}
+    - Only describe what is visible in this crop
+    - Use "unknown" when uncertain
+    - Return ONLY the JSON, nothing else
