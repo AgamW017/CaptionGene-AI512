@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 _HF_MODEL_ID = "Qwen/Qwen2.5-VL-3B-Instruct"
 _MAX_NEW_TOKENS = 512
+_MAX_IMAGE_EDGE = 768
 
 
 class QwenVLModel(CaptionModel):
@@ -172,6 +173,9 @@ class QwenVLModel(CaptionModel):
 
         if image.mode != "RGB":
             image = image.convert("RGB")
+        if max(image.size) > _MAX_IMAGE_EDGE:
+            image = image.copy()
+            image.thumbnail((_MAX_IMAGE_EDGE, _MAX_IMAGE_EDGE), Image.Resampling.LANCZOS)
 
         max_new_tokens = int(kwargs.get("max_new_tokens", _MAX_NEW_TOKENS))
         messages = self._build_messages(image, prompt, system)
@@ -186,7 +190,7 @@ class QwenVLModel(CaptionModel):
             for _i in range(n):
                 inputs = self._processor(
                     text=[text_input],
-                    images=[image],
+                    images=image,
                     return_tensors="pt",
                     padding=True,
                 )
@@ -206,15 +210,23 @@ class QwenVLModel(CaptionModel):
                 # Decode only the newly generated tokens
                 input_len = inputs["input_ids"].shape[1]
                 new_ids = output_ids[:, input_len:]
-                raw_text = self._processor.batch_decode(
-                    new_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
-                )[0].strip()
+                raw_text = self._processor.tokenizer.decode(
+                    new_ids[0],
+                    skip_special_tokens=True,
+                    clean_up_tokenization_spaces=False,
+                ).strip()
+                from wastecap.prompts import parse_structured_output
+
+                parsed = parse_structured_output(raw_text)
 
                 candidates.append(
                     Candidate(
                         model=self.name,
                         prompt_id=prompt_id,
                         text=raw_text,
+                        parse_failed=parsed.parse_failed,
+                        raw_parsed=parsed.raw_parsed,
+                        grounding_boxes=parsed.grounding_boxes,
                         created_at=datetime.now(tz=UTC),
                     )
                 )

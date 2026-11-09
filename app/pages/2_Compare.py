@@ -15,8 +15,16 @@ The page is read-only. To approve/reject, go to the Review page.
 from __future__ import annotations
 
 import logging
+import sys
+from pathlib import Path
 
 import streamlit as st
+
+_PROJECT_ROOT = str(Path(__file__).resolve().parents[2])
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from app.components.ui import inject_styles, page_header  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +88,8 @@ def _render_model_col(model_name: str, candidate, score) -> None:
     # Hallucination flags
     flags = get_hallucination_flags(candidate)
     if flags:
-        with st.expander(f"⚠️ {len(flags)} hallucination hint(s)", expanded=False):
+        with st.container(border=True):
+            st.markdown(f"⚠️ **{len(flags)} hallucination hint(s)**")
             for f in flags:
                 st.warning(f"• {f}", icon="⚠️")
             st.caption("These are heuristic hints — the reviewer makes the final call.")
@@ -95,7 +104,8 @@ def _render_model_col(model_name: str, candidate, score) -> None:
     if candidate.raw_parsed and not candidate.parse_failed:
         objects = candidate.raw_parsed.get("objects") or []
         if objects and isinstance(objects, list):
-            with st.expander("Structured fields", expanded=False):
+            with st.container(border=True):
+                st.markdown("**Structured fields**")
                 obj = objects[0]
                 cols = st.columns(3)
                 cols[0].metric("Category", obj.get("category", "—"))
@@ -115,8 +125,12 @@ def _render_model_col(model_name: str, candidate, score) -> None:
 
 
 def main() -> None:
-    st.title("⚖️ Compare")
-    st.caption("Side-by-side BLIP-2 vs Qwen2.5-VL. Approval happens on the ✅ Review page.")
+    inject_styles()
+    page_header(
+        "Model lab",
+        "Compare candidates",
+        "Inspect BLIP-2 and Qwen2.5-VL side by side. Approval happens in Review.",
+    )
 
     db_path = _get_db_path()
 
@@ -236,6 +250,10 @@ def main() -> None:
                         if o.bbox is not None
                     ]
                     image_viewer(img, bboxes=bboxes or None, labels=labels or None)
+                    st.caption(
+                        f"Reference annotations: {len(bboxes)} box(es). "
+                        "Model boxes are reported separately below."
+                    )
                 else:
                     st.warning("Image not found on disk.")
 

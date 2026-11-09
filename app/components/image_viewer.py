@@ -53,9 +53,15 @@ def _draw_boxes(
         if len(bbox) != 4:
             continue
         x, y, w, h = bbox
-        x1, y1, x2, y2 = int(x), int(y), int(x + w), int(y + h)
+        if w <= 0 or h <= 0:
+            continue
+        x1 = max(0, min(int(x), img.width - 1))
+        y1 = max(0, min(int(y), img.height - 1))
+        x2 = max(x1 + 1, min(int(x + w), img.width - 1))
+        y2 = max(y1 + 1, min(int(y + h), img.height - 1))
         colour = _BOX_COLOURS[i % len(_BOX_COLOURS)]
-        draw.rectangle([x1, y1, x2, y2], outline=colour, width=_BOX_WIDTH)
+        width = max(_BOX_WIDTH, round(min(img.width, img.height) / 180))
+        draw.rectangle([x1, y1, x2, y2], outline=colour, width=width)
 
         if labels and i < len(labels):
             label = labels[i]
@@ -93,6 +99,9 @@ def image_viewer(
     display = _draw_boxes(image, bboxes, labels) if bboxes else image
 
     st.image(display, caption=caption, use_container_width=use_container_width)
+    if bboxes:
+        valid = sum(1 for bbox in bboxes if len(bbox) == 4 and bbox[2] > 0 and bbox[3] > 0)
+        st.caption(f"Showing {valid} reference box(es) · source annotation overlay")
 
 
 def load_image(path: str | Path) -> Image.Image | None:

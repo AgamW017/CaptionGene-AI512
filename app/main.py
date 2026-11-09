@@ -68,14 +68,19 @@ def _sidebar() -> None:
 
 
 def main() -> None:
+    from app.components.ui import inject_styles, page_header
+
+    inject_styles()
     _sidebar()
 
-    st.title("WasteCap — Dashboard")
-    st.markdown(
-        "Welcome to the **Waste Image–Caption Dataset Curation App**. "
-        "Use the sidebar to navigate to individual pages."
+    page_header(
+        "WasteCap workspace",
+        "Curate trustworthy waste intelligence",
+        (
+            "Generate candidates, ground every object, and approve only what a human "
+            "reviewer can verify."
+        ),
     )
-    st.divider()
 
     # Initialise DB and show status
     db_path = _init_db()
@@ -92,12 +97,43 @@ def main() -> None:
     col3.metric("Pending", by_status.get("pending", 0))
     col4.metric("Rejected", by_status.get("rejected", 0))
 
-    st.subheader("Database")
-    st.info(f"DB path: `{db_path}`")
+    st.subheader("Workspace overview")
+    st.caption(f"Source of truth: `{db_path}`")
 
     if by_source:
         st.subheader("Records by source")
-        st.bar_chart(by_source)
+        import pandas as pd
+
+        df = pd.DataFrame(
+            {"source": list(by_source.keys()), "count": list(by_source.values())}
+        ).set_index("source")
+        st.dataframe(df, use_container_width=True)
+
+    reviewed = by_status.get("approved", 0) + by_status.get("rejected", 0)
+    st.subheader("Review progress")
+    st.progress(reviewed / total if total else 0, text=f"{reviewed} of {total} records reviewed")
+    a, b, c = st.columns(3)
+    with a:
+        st.markdown(
+            '<div class="wc-card"><div class="wc-kicker">Next step</div>'
+            '<div class="wc-value">Curate</div><div class="wc-muted">'
+            "Generate candidates with the mock backend first.</div></div>",
+            unsafe_allow_html=True,
+        )
+    with b:
+        st.markdown(
+            '<div class="wc-card"><div class="wc-kicker">Quality gate</div>'
+            '<div class="wc-value">Review</div><div class="wc-muted">'
+            "Approve only captions grounded in visible evidence.</div></div>",
+            unsafe_allow_html=True,
+        )
+    with c:
+        st.markdown(
+            '<div class="wc-card"><div class="wc-kicker">Deliverable</div>'
+            '<div class="wc-value">Export</div><div class="wc-muted">'
+            "Download validated JSON, JSONL, or CSV per split.</div></div>",
+            unsafe_allow_html=True,
+        )
 
     if total == 0:
         st.warning(

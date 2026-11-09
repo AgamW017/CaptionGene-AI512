@@ -16,9 +16,17 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from datetime import UTC, datetime
+from pathlib import Path
 
 import streamlit as st
+
+_PROJECT_ROOT = str(Path(__file__).resolve().parents[2])
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from app.components.ui import inject_styles, page_header  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -204,7 +212,12 @@ def _render_candidate(rec, ci: int, cand, edit_idx: int, db_path) -> str | None:
 
 
 def main() -> None:
-    st.title("✅ Review")
+    inject_styles()
+    page_header(
+        "Human quality gate",
+        "Review queue",
+        "Edit, flag, approve, or reject candidates with a clear audit trail.",
+    )
 
     db_path = _get_db_path()
 

@@ -18,10 +18,19 @@ State stored in st.session_state:
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
+import sys
+from pathlib import Path
 
 import streamlit as st
+
+_PROJECT_ROOT = str(Path(__file__).resolve().parents[2])
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from app.components.ui import inject_styles, page_header  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +70,12 @@ def _ss(key: str, default=None):  # type: ignore[return]
 
 
 def main() -> None:
-    st.title("🖼️ Curate")
+    inject_styles()
+    page_header(
+        "Candidate studio",
+        "Curate captions",
+        "Browse the image queue, generate candidates, and keep every model output reviewable.",
+    )
 
     db_path = _get_db_path()
 
@@ -97,6 +111,40 @@ def main() -> None:
         sel_n = st.number_input(
             "Candidates per image (n)", min_value=1, max_value=5, value=3, step=1
         )
+        prompt_override = st.text_area(
+            "Prompt template override",
+            value="",
+            help="Optional scene-level prompt. Leave blank to use the configured YAML template.",
+        )
+        uploaded = st.file_uploader("Upload a waste image", type=["jpg", "jpeg", "png"])
+        if uploaded is not None and st.button("Add uploaded image", key="add_upload"):
+            from PIL import Image
+
+            from wastecap.schema import AnnotationRecord, DataSource, RecordStatus, Split
+            from wastecap.store import ingest_record
+
+            upload_root = Path(_PROJECT_ROOT) / "data" / "processed" / "uploads"
+            upload_root.mkdir(parents=True, exist_ok=True)
+            suffix = Path(uploaded.name).suffix.lower() or ".png"
+            image_id = f"upload_{hashlib.sha256(uploaded.getvalue()).hexdigest()[:12]}"
+            target = upload_root / f"{image_id}{suffix}"
+            target.write_bytes(uploaded.getvalue())
+            with Image.open(target) as image:
+                width, height = image.size
+            ingest_record(
+                AnnotationRecord(
+                    image_id=image_id,
+                    file=str(target),
+                    source=DataSource.web,
+                    width=width,
+                    height=height,
+                    split=Split.train,
+                    status=RecordStatus.pending,
+                ),
+                db_path,
+            )
+            st.success(f"Added `{image_id}` to the review queue.")
+            st.rerun()
 
     # ── Load records ────────────────────────────────────────────────────────
     list_kwargs: dict = {"db_path": db_path}
@@ -157,6 +205,21 @@ def main() -> None:
                     image_viewer(
                         img, bboxes=bboxes or None, labels=labels or None, caption=rec.image_id
                     )
+                    if bboxes:
+                        st.dataframe(
+                            [
+                                {
+                                    "Object": obj.object_id,
+                                    "Class": obj.category.value,
+                                    "Material": obj.material.value,
+                                    "Box [x, y, w, h]": [round(v, 1) for v in obj.bbox],
+                                }
+                                for obj in rec.objects
+                                if obj.bbox is not None
+                            ],
+                            hide_index=True,
+                            use_container_width=True,
+                        )
                 else:
                     st.warning(f"Image not on disk: `{rec.file}`")
 
@@ -181,7 +244,15 @@ def main() -> None:
                         st.error("Image file not found — cannot generate.")
                     else:
                         with st.spinner("Generating…"):
-                            _run_generate(rec, img, sel_model, sel_level, int(sel_n), db_path)
+                            _run_generate(
+                                rec,
+                                img,
+                                sel_model,
+                                sel_level,
+                                int(sel_n),
+                                db_path,
+                                prompt_override=prompt_override or None,
+                            )
                         st.rerun()
 
                 if not rec.candidates:
@@ -196,7 +267,16 @@ def main() -> None:
                         # happens only in Review.
 
 
-def _run_generate(rec, img, model_name: str, level: str, n: int, db_path) -> None:
+def _run_generate(
+    rec,
+    img,
+    model_name: str,
+    level: str,
+    n: int,
+    db_path,
+    *,
+    prompt_override: str | None = None,
+) -> None:
     """Generate candidates for *rec* and append to its candidates list in the DB."""
     from wastecap.cli import _generate_objects, _generate_scene
     from wastecap.models.registry import get_model
@@ -205,7 +285,7 @@ def _run_generate(rec, img, model_name: str, level: str, n: int, db_path) -> Non
     try:
         model = get_model(model_name)
         if level == "scene":
-            new_cands = _generate_scene(model, img, model_name, n)
+            new_cands = _generate_scene(model, img, model_name, n, prompt_override)
         else:
             new_cands = _generate_objects(model, img, rec, model_name, n)
 

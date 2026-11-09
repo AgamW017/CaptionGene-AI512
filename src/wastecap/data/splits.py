@@ -138,4 +138,32 @@ def load_splits(path: Path | None = None) -> dict[str, list[str]]:
     if not p.exists():
         raise FileNotFoundError(f"splits.json not found at {p}. Run scripts/ingest.py first.")
     with p.open("r", encoding="utf-8") as f:
-        return json.load(f)
+        splits = json.load(f)
+    validate_splits(splits)
+    return splits
+
+
+def validate_splits(
+    splits: dict[str, list[str]],
+    records: list[AnnotationRecord] | None = None,
+) -> None:
+    """Validate frozen split metadata and optionally compare it to records."""
+    expected = {"train", "val", "test"}
+    if set(splits) != expected:
+        raise ValueError(f"splits must contain exactly {sorted(expected)}")
+    all_ids = [image_id for ids in splits.values() for image_id in ids]
+    if len(all_ids) != len(set(all_ids)):
+        raise ValueError("An image_id occurs in more than one split")
+    if any(not isinstance(image_id, str) or not image_id for image_id in all_ids):
+        raise ValueError("Every split entry must be a non-empty image_id string")
+    if records is not None:
+        record_ids = {record.image_id for record in records}
+        split_ids = set(all_ids)
+        if record_ids != split_ids:
+            missing = sorted(record_ids - split_ids)
+            extra = sorted(split_ids - record_ids)
+            raise ValueError(f"Split IDs do not match records; missing={missing}, extra={extra}")
+        for record in records:
+            assigned = next(name for name, ids in splits.items() if record.image_id in ids)
+            if record.split is None or record.split.value != assigned:
+                raise ValueError(f"{record.image_id} has inconsistent split assignment")

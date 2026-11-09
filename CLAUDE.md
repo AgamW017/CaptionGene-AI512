@@ -23,9 +23,9 @@ Week map (see `SPEC.md` for detail):
 - Ask before adding any dependency outside this list.
 
 ## Hardware (fill in, then keep updated)
-- GPU: `<model + VRAM, or "none, use Colab/Kaggle for model runs">`
-- RAM / disk: `<...>`
-- Model sizes to use by default: `<e.g. Blip2-opt-2.7b 4-bit, Qwen2.5-VL-3B>`
+- GPU: NVIDIA GeForce RTX 3050 Laptop GPU, 4 GiB VRAM
+- RAM / disk: Not fixed in repository; check local machine before downloads
+- Model sizes to use by default: Qwen2.5-VL-3B 4-bit; mock backend for tests
 
 Backends are selected by environment variables, never hard-coded:
 `WASTECAP_BACKEND` (`mock` | `blip2` | `qwen_vl` | `llava`), `WASTECAP_DEVICE` (`cuda` | `cpu`), `WASTECAP_QUANTIZE` (`none` | `4bit` | `8bit`).
@@ -106,10 +106,16 @@ Draft taxonomy (finalize in `configs/taxonomy.yaml` in M0 and map every source l
 ## Commands (keep this section accurate as the project grows)
 ```
 pip install -e ".[dev]"
+pip install -e ".[eval,ml]"  # official BLEU/CIDEr, CLIPScore, and model runtime
+# pycocoevalcap's PTB tokenizer also requires Java (default-jre-headless)
 ruff check . && ruff format --check .
 pytest -q
 streamlit run app/main.py
 python -m wastecap.cli generate --model mock --split train --n 3 --limit 20
+python -m wastecap.cli export --output-dir results/exports
+python -m wastecap.cli stats
+python scripts/run_baseline.py --model qwen_vl --split test --output-dir results
+python scripts/error_analysis.py results/baseline_qwen_vl_test.json
 python -m wastecap.eval.baseline --model qwen_vl --split val
 ```
 

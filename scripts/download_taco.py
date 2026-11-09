@@ -90,7 +90,9 @@ def _download_image(img: dict, dry_run: bool) -> bool:
 
     dest.parent.mkdir(parents=True, exist_ok=True)
     try:
-        urllib.request.urlretrieve(url, dest)
+        request = urllib.request.Request(url, headers={"User-Agent": "WasteCap dataset downloader"})
+        with urllib.request.urlopen(request) as response, dest.open("wb") as output:
+            output.write(response.read())
         return True
     except Exception as exc:
         logger.warning("Failed to download %s: %s", url, exc)

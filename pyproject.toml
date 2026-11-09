@@ -51,8 +51,7 @@ dev = [
 ]
 
 eval = [
-    # pycocoevalcap is installed from source; pin the commit here for reference.
-    # pip install git+https://github.com/tylin/coco-caption.git
+    "pycocoevalcap==1.2",
     "sacrebleu==2.5.1",    # BLEU fallback if pycocoevalcap unavailable
 ]
 

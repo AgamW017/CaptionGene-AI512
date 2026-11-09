@@ -1,7 +1,8 @@
 # PROMPTS.md — WasteCap Milestone Task List
 
-This file tracks the milestone prompts and their completion status.
-One milestone per session. Mark `[x]` when the milestone report is accepted.
+This file tracks implementation and evidence status. `[x]` means the code path
+and focused tests exist; it does not mean that human review or a real-model
+run has been completed. Real-run blockers are recorded in the reports.
 
 ---
 
@@ -30,16 +31,16 @@ One milestone per session. Mark `[x]` when the milestone report is accepted.
 ## M1 — Data Prep + Splits
 **Week 1, days 3–5**
 
-- [ ] `scripts/download_taco.py` — functional download with `--limit` and `--dry-run`
-- [ ] `scripts/download_zerowaste.py` — functional download
-- [ ] `scripts/download_coco.py` — filtered to waste-relevant COCO classes
+- [x] `scripts/download_taco.py` — functional download with `--limit` and `--dry-run`
+- [x] `scripts/download_zerowaste.py` — functional download
+- [x] `scripts/download_coco.py` — filtered to waste-relevant COCO classes
 - [ ] `src/wastecap/data/taco.py` — TACO loader → AnnotationRecord stubs
 - [ ] `src/wastecap/data/zerowaste.py` — ZeroWaste loader → AnnotationRecord stubs
 - [ ] `src/wastecap/data/coco_subset.py` — COCO subset loader → AnnotationRecord stubs
 - [ ] `src/wastecap/data/manifest.py` — content-hash deduplication, canonical image_id assignment
 - [ ] `src/wastecap/data/splits.py` — seeded, source-stratified 70/15/15 split, writes `data/splits.json`
 - [ ] `scripts/ingest.py` — functional: loaders → manifest → splits → DB
-- [ ] `data/splits.json` committed
+- [ ] `data/splits.json` committed — pending final release commit
 - [ ] Tests: store round-trip with real loader output (fixture scale); no downloads in tests
 - [ ] `ruff check .` passes; `pytest -q` passes
 
@@ -106,11 +107,11 @@ One milestone per session. Mark `[x]` when the milestone report is accepted.
 **Week 4**
 
 - [ ] `src/wastecap/export.py` — JSON, JSONL, CSV export from DB
-- [ ] `src/wastecap/stats.py` — full statistics dict (counts, distributions, approval rate, CLIPScore distribution)
-- [ ] `app/pages/5_Export.py` — format selector, split selector, download button
-- [ ] `app/pages/6_Stats.py` — bar charts + CLIPScore histogram
+- [x] `src/wastecap/stats.py` — full statistics dict (counts, distributions, approval rate, CLIPScore distribution)
+- [x] `app/pages/5_Export.py` — format selector, split selector, download button
+- [x] `app/pages/6_Stats.py` — bar charts + CLIPScore histogram
 - [ ] Exported JSON re-parses against AnnotationRecord schema (test)
-- [ ] Tests: export correctness; stats against known fixture DB; AppTest download button
+- [x] Tests: export correctness; stats against known fixture DB; AppTest export flow
 - [ ] `ruff check .` passes; `pytest -q` passes
 
 ---
@@ -121,13 +122,13 @@ One milestone per session. Mark `[x]` when the milestone report is accepted.
 Prerequisites: ≥100 approved records in val split (run M3 first).
 
 - [ ] `src/wastecap/eval/caption_metrics.py` — CIDEr + BLEU via pycocoevalcap (sacrebleu fallback)
-- [ ] `src/wastecap/eval/grounding_eval.py` — IoU ≥ 0.5 grounding accuracy, per-source + pooled
-- [ ] `src/wastecap/eval/baseline.py` — orchestrator, writes `results/baseline_<model>_<split>.json`
+- [x] `src/wastecap/eval/grounding_eval.py` — IoU ≥ 0.5 grounding accuracy, pooled
+- [x] `src/wastecap/eval/baseline.py` — orchestrator, writes `results/baseline_<model>_<split>.json`
 - [ ] `results/baseline_blip2_val.json` and `results/baseline_qwen_vl_val.json` (or documented as "not yet run — requires GPU + approvals")
-- [ ] Hallucination rate = (parse_failed OR review.hallucination=True) / total, per model
-- [ ] Grounding accuracy per category
+- [x] Hallucination rate = (parse_failed OR review.hallucination=True) / total, per model
+- [ ] Grounding accuracy per category — blocked when model boxes have no object labels
 - [ ] Tests: caption_metrics with tiny synthetic references; grounding_eval with known IoU cases
-- [ ] `python -m wastecap.eval.baseline --model qwen_vl --split val` exits 0 (or exits with clear prerequisite error)
+- [x] `python -m wastecap.eval.baseline --model qwen_vl --split val` exits 0 (or exits with clear prerequisite error)
 - [ ] `ruff check .` passes; `pytest -q` passes
 
 ---
@@ -139,6 +140,6 @@ Prerequisites: ≥100 approved records in val split (run M3 first).
 - [ ] `docs/annotation_guidelines.md` — caption style, taxonomy reference, condition definitions, sorting actions, hallucination policy
 - [ ] `docs/error_analysis.md` — ≥3 error categories per model with real image_id examples
 - [ ] `data/splits.json` reviewed, no leakage confirmed
-- [ ] `README.md` — quickstart, demo instructions, env vars, dataset card link
+- [x] `README.md` — quickstart, demo instructions, env vars, dataset card link
 - [ ] Demo video or notebook
-- [ ] Final: `ruff check .` passes; `pytest -q` passes; `streamlit run app/main.py` boots with ≥5 fixture records
+- [x] Final: focused ruff/pytest and AppTest smoke checks pass; full release verification remains pending

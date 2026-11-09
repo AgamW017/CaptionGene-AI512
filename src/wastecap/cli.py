@@ -48,6 +48,7 @@ def _generate_scene(
     image: PILImage,
     model_name: str,
     n: int,
+    prompt_override: str | None = None,
 ) -> list[Candidate]:
     """Run full-image captioning; parse and annotate each candidate."""
     from wastecap.prompts import parse_structured_output, render_prompt
@@ -58,7 +59,11 @@ def _generate_scene(
         gen_kwargs["system"] = rendered.system
 
     raw: list[Candidate] = model.generate(
-        image, rendered.text, n=n, prompt_id=rendered.prompt_id, **gen_kwargs
+        image,
+        prompt_override or rendered.text,
+        n=n,
+        prompt_id=rendered.prompt_id,
+        **gen_kwargs,
     )
     result: list[Candidate] = []
     for cand in raw:
@@ -230,6 +235,41 @@ def _add_generate_parser(subparsers: argparse._SubParsersAction) -> None:  # noq
     p.set_defaults(func=_cmd_generate)
 
 
+def _cmd_export(args: argparse.Namespace) -> int:
+    from wastecap.export import ExportValidationError, export_splits
+
+    try:
+        counts = export_splits(Path(args.output_dir), include_all=args.include_all)
+    except ExportValidationError as exc:
+        logger.error("%s", exc)
+        return 1
+    logger.info("Exported annotations: %s", counts)
+    return 0
+
+
+def _add_export_parser(subparsers: argparse._SubParsersAction) -> None:  # noqa: SLF001
+    p = subparsers.add_parser(
+        "export",
+        help="Export approved annotations as JSON, JSONL, and CSV per split.",
+    )
+    p.add_argument("--output-dir", default="results/exports")
+    p.add_argument(
+        "--include-all",
+        action="store_true",
+        help="Export all records after validation instead of approved records only.",
+    )
+    p.set_defaults(func=_cmd_export)
+
+
+def _cmd_stats(args: argparse.Namespace) -> int:
+    import json
+
+    from wastecap.stats import compute_statistics
+
+    print(json.dumps(compute_statistics(), indent=2))
+    return 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="wastecap",
@@ -239,8 +279,9 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="command")
 
     _add_generate_parser(subparsers)
-    subparsers.add_parser("export", help="Export annotations (M6)")
-    subparsers.add_parser("stats", help="Print dataset statistics (M6)")
+    _add_export_parser(subparsers)
+    stats_parser = subparsers.add_parser("stats", help="Print dataset statistics.")
+    stats_parser.set_defaults(func=_cmd_stats)
     subparsers.add_parser("eval", help="Run baseline evaluation (M7)")
 
     args = parser.parse_args()
