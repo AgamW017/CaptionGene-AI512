@@ -11,7 +11,7 @@ for _path in (_PROJECT_ROOT, _SRC_ROOT):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-from app.components.ui import inject_styles, page_header  # noqa: E402
+from app.components.ui import inject_styles, page_header, section_heading  # noqa: E402
 
 from wastecap.stats import compute_statistics  # noqa: E402
 
@@ -30,33 +30,34 @@ metric_cols[1].metric("Approved", stats["approved_images"])
 metric_cols[2].metric("Approval rate", f"{stats['approval_rate']:.1%}")
 metric_cols[3].metric("Reviewed", stats["review_progress"]["reviewed_images"])
 
+section_heading("Coverage", "Distribution across the current source of truth")
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader("Images by split")
+    st.markdown("**Images by split**")
     st.dataframe(
         [{"split": name, "images": count} for name, count in stats["images_by_split"].items()],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
-    st.subheader("Review progress")
+    st.markdown("**Review progress**")
     progress = stats["review_progress"]
     st.progress(progress["review_rate"], text=f"{progress['review_rate']:.1%} reviewed")
     st.json(progress["status_counts"])
 with col2:
-    st.subheader("Class distribution")
+    st.markdown("**Class distribution**")
     st.dataframe(
         [{"class": name, "images": count} for name, count in stats["class_distribution"].items()],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
-    st.subheader("Captions per class")
+    st.markdown("**Captions per class**")
     st.dataframe(
         [{"class": name, "captions": count} for name, count in stats["captions_per_class"].items()],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
 
-st.subheader("CLIPScore distribution")
+section_heading("Model quality", "Reference-free candidate scoring")
 clip_scores = stats["clipscore_distribution"]
 if clip_scores:
     st.bar_chart({"CLIPScore": clip_scores}, horizontal=False)

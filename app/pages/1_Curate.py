@@ -32,7 +32,7 @@ for _path in (_PROJECT_ROOT, _SRC_ROOT):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-from app.components.ui import inject_styles, page_header  # noqa: E402
+from app.components.ui import inject_styles, page_header, section_heading  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ def main() -> None:
 
     # ── Sidebar filters ──────────────────────────────────────────────────────
     with st.sidebar:
-        st.subheader("Filters")
+        st.subheader("Queue")
         source_opts = ["all", "taco", "zerowaste", "coco", "web"]
         split_opts = ["all", "train", "val", "test"]
         status_opts = ["all", "pending", "edited", "rejected", "approved"]
@@ -94,12 +94,11 @@ def main() -> None:
         sel_split = st.selectbox("Split", split_opts, key="curate_split")
         sel_status = st.selectbox("Status", status_opts, key="curate_status")
 
-        st.divider()
-        page_size = st.number_input("Page size", min_value=1, max_value=50, value=10, step=1)
+        page_size = st.number_input("Images per page", min_value=1, max_value=50, value=5, step=1)
         st.divider()
 
         # Model selector
-        st.subheader("Generation")
+        st.subheader("Generation studio")
         backend = os.environ.get("WASTECAP_BACKEND", "mock")
         available_backends = ["mock", "blip2", "qwen_vl", "llava"]
         default_idx = available_backends.index(backend) if backend in available_backends else 0
@@ -158,6 +157,7 @@ def main() -> None:
         list_kwargs["status"] = sel_status
 
     records = list_records(**list_kwargs)
+    section_heading("Image queue", f"{len(records)} matching record(s)")
 
     if not records:
         st.info("No records match the current filters. Run `scripts/ingest.py` to load data.")
@@ -169,13 +169,13 @@ def main() -> None:
     page = _ss("curate_page", 0)
     page = max(0, min(page, n_pages - 1))
 
-    col_prev, col_info, col_next = st.columns([1, 3, 1])
+    col_prev, col_info, col_next = st.columns([1, 3, 1], vertical_alignment="center")
     with col_prev:
         if st.button("← Prev", disabled=page == 0, key="curate_prev"):
             st.session_state["curate_page"] = page - 1
             st.rerun()
     with col_info:
-        st.caption(f"Page {page + 1} / {n_pages}  ·  {total} records")
+        st.markdown(f"**Page {page + 1} of {n_pages}**  ·  {total} records")
     with col_next:
         if st.button("Next →", disabled=page >= n_pages - 1, key="curate_next"):
             st.session_state["curate_page"] = page + 1
@@ -205,7 +205,10 @@ def main() -> None:
                         if o.bbox is not None
                     ]
                     image_viewer(
-                        img, bboxes=bboxes or None, labels=labels or None, caption=rec.image_id
+                        img,
+                        bboxes=bboxes or None,
+                        labels=labels or None,
+                        caption=rec.image_id,
                     )
                     if bboxes:
                         st.dataframe(
@@ -220,7 +223,7 @@ def main() -> None:
                                 if obj.bbox is not None
                             ],
                             hide_index=True,
-                            use_container_width=True,
+                            width="stretch",
                         )
                 else:
                     st.warning(f"Image not on disk: `{rec.file}`")
@@ -236,10 +239,15 @@ def main() -> None:
             # ── Right: generate + candidates ──
             with right:
                 gen_key = f"gen_{rec.image_id}"
+                st.markdown(f"**{rec.image_id}**")
+                st.caption(
+                    f"{rec.source.value} · {rec.split.value if rec.split else '—'} · "
+                    f"{rec.status.value}"
+                )
                 if st.button(
-                    f"▶ Generate ({sel_model}, {sel_level}, n={sel_n})",
+                    ":material/auto_awesome: Generate candidates",
                     key=gen_key,
-                    use_container_width=True,
+                    width="stretch",
                     type="primary",
                 ):
                     if img is None:

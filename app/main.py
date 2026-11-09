@@ -54,30 +54,33 @@ def _init_db() -> Path:
 
 def _sidebar() -> None:
     with st.sidebar:
-        st.title("♻️ WasteCap")
-        st.caption("Waste Image–Caption Dataset Curation")
+        st.markdown(
+            '<div class="wc-brand"><div class="wc-brand-mark">W</div>'
+            '<div><div class="wc-brand-name">WasteCap</div>'
+            '<div class="wc-brand-sub">Evidence-first curation</div></div></div>',
+            unsafe_allow_html=True,
+        )
+        st.caption("A focused workspace for turning waste images into verified, grounded data.")
         st.divider()
 
         # Environment / config info
-        st.subheader("Configuration")
+        st.subheader("Runtime")
         backend = os.environ.get("WASTECAP_BACKEND", "mock")
         device = os.environ.get("WASTECAP_DEVICE", "cpu")
         quantize = os.environ.get("WASTECAP_QUANTIZE", "none")
         reviewer = os.environ.get("WASTECAP_REVIEWER", "annotator_1")
         db_path = os.environ.get("WASTECAP_DB_PATH", "data/db/wastecap.db")
 
-        st.markdown(f"**Backend:** `{backend}`")
-        st.markdown(f"**Device:** `{device}`")
-        st.markdown(f"**Quantize:** `{quantize}`")
-        st.markdown(f"**Reviewer:** `{reviewer}`")
-        st.markdown(f"**DB:** `{db_path}`")
+        st.markdown(f":material/smart_toy: **{backend}** · `{device}`")
+        st.caption(f"Quantization: `{quantize}` · Reviewer: `{reviewer}`")
+        st.caption(f"Database: `{db_path}`")
         st.divider()
 
-        st.caption("Navigate via the sidebar pages →")
+        st.caption("Use the pages above to move from generation to approval and export.")
 
 
 def main() -> None:
-    from app.components.ui import inject_styles, page_header
+    from app.components.ui import card, inject_styles, page_header, section_heading
 
     inject_styles()
     _sidebar()
@@ -106,42 +109,49 @@ def main() -> None:
     col3.metric("Pending", by_status.get("pending", 0))
     col4.metric("Rejected", by_status.get("rejected", 0))
 
-    st.subheader("Workspace overview")
-    st.caption(f"Source of truth: `{db_path}`")
+    section_heading("Workspace overview", f"Source of truth · {db_path}")
 
     if by_source:
-        st.subheader("Records by source")
+        section_heading("Collection mix", "Images currently in the source of truth")
         import pandas as pd
 
         df = pd.DataFrame(
             {"source": list(by_source.keys()), "count": list(by_source.values())}
         ).set_index("source")
-        st.dataframe(df, use_container_width=True)
+        st.bar_chart(df, height=220)
 
     reviewed = by_status.get("approved", 0) + by_status.get("rejected", 0)
-    st.subheader("Review progress")
-    st.progress(reviewed / total if total else 0, text=f"{reviewed} of {total} records reviewed")
+    section_heading("Review health", "Move the queue from pending to trusted")
+    progress_col, summary_col = st.columns([1.5, 1])
+    with progress_col, st.container(border=True):
+        st.markdown("**Human review completion**")
+        st.progress(reviewed / total if total else 0)
+        st.caption(f"{reviewed} of {total} records have a final approve/reject decision.")
+        st.metric(
+            "Approval rate",
+            f"{by_status.get('approved', 0) / total:.1%}" if total else "0.0%",
+        )
+    with summary_col, st.container(border=True):
+        st.markdown("**Queue snapshot**")
+        st.write(f":orange-badge[Pending] {by_status.get('pending', 0)}")
+        st.write(f":green-badge[Approved] {by_status.get('approved', 0)}")
+        st.write(f":red-badge[Rejected] {by_status.get('rejected', 0)}")
+
+    section_heading("Workflow", "A simple path from image to validated export")
     a, b, c = st.columns(3)
     with a:
-        st.markdown(
-            '<div class="wc-card"><div class="wc-kicker">Next step</div>'
-            '<div class="wc-value">Curate</div><div class="wc-muted">'
-            "Generate candidates with the mock backend first.</div></div>",
-            unsafe_allow_html=True,
+        card(
+            "01 · Generate",
+            "Curate",
+            "Select an image, model, and prompt. Keep every candidate visible.",
         )
     with b:
-        st.markdown(
-            '<div class="wc-card"><div class="wc-kicker">Quality gate</div>'
-            '<div class="wc-value">Review</div><div class="wc-muted">'
-            "Approve only captions grounded in visible evidence.</div></div>",
-            unsafe_allow_html=True,
-        )
+        card("02 · Verify", "Review", "Edit, flag, and approve only what the image supports.")
     with c:
-        st.markdown(
-            '<div class="wc-card"><div class="wc-kicker">Deliverable</div>'
-            '<div class="wc-value">Export</div><div class="wc-muted">'
-            "Download validated JSON, JSONL, or CSV per split.</div></div>",
-            unsafe_allow_html=True,
+        card(
+            "03 · Deliver",
+            "Export",
+            "Run schema validation before downloading split-level artifacts.",
         )
 
     if total == 0:
