@@ -27,8 +27,10 @@ from pathlib import Path
 import streamlit as st
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parents[2])
-if _PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, _PROJECT_ROOT)
+_SRC_ROOT = str(Path(_PROJECT_ROOT) / "src")
+for _path in (_PROJECT_ROOT, _SRC_ROOT):
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
 
 from app.components.ui import inject_styles, page_header  # noqa: E402
 
