@@ -12,6 +12,15 @@ def inject_styles() -> None:
         :root { --wc-ink:#17212b; --wc-muted:#657786; --wc-teal:#0f766e;
                 --wc-mint:#dff7f2; --wc-border:#dfe7ea; --wc-bg:#f7fafb; }
         .stApp { background:var(--wc-bg); }
+        .stApp, .stApp p, .stApp label, .stApp [data-testid="stMarkdownContainer"],
+        .stApp [data-testid="stWidgetLabel"], .stApp [data-testid="stCaptionContainer"] {
+          color:var(--wc-ink);
+        }
+        .stApp [data-testid="stCaptionContainer"], .stApp small { color:var(--wc-muted); }
+        .stApp input, .stApp textarea, .stApp [data-baseweb="select"] {
+          color:var(--wc-ink); background:#ffffff;
+        }
+        .stApp input::placeholder, .stApp textarea::placeholder { color:#71808a; opacity:1; }
         [data-testid="stHeader"] { background:rgba(247,250,251,.9); }
         [data-testid="stSidebar"] { border-right:1px solid var(--wc-border); }
         [data-testid="stSidebar"] > div:first-child { background:#ffffff; }
