@@ -41,6 +41,48 @@ generate candidates. The Review page approves captions,
 the Instructions page to edit and approve grounded sorting instructions, and
 the Export and Stats pages for validated outputs and progress.
 
+### Run with Docker
+
+The default image is CPU-compatible and uses the mock backend, so it runs
+without a GPU or model downloads:
+
+```bash
+docker compose up --build
+```
+
+Open [http://localhost:8501](http://localhost:8501). SQLite state, uploaded
+data, generated exports, and model caches are stored in named Docker volumes
+and survive container restarts.
+
+To select a backend without rebuilding:
+
+```bash
+WASTECAP_BACKEND=qwen_vl \
+WASTECAP_DEVICE=cuda \
+WASTECAP_QUANTIZE=4bit \
+docker compose up
+```
+
+For model dependencies, rebuild with `INSTALL_ML=true`:
+
+```bash
+INSTALL_ML=true docker compose build
+INSTALL_ML=true docker compose up
+```
+
+The ML image installs the Python model stack but does not download weights
+during build. The first generation downloads the selected Hugging Face model.
+For NVIDIA GPU inference, install the NVIDIA Container Toolkit on the host and
+run the container with GPU access:
+
+```bash
+docker run --gpus all --rm -p 8501:8501 \
+  -e WASTECAP_BACKEND=qwen_vl \
+  -e WASTECAP_DEVICE=cuda \
+  -e WASTECAP_QUANTIZE=4bit \
+  wastecap:latest
+```
+
 Real model runs require the optional ML dependencies and weights:
 
 ```bash
