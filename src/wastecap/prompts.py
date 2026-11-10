@@ -15,11 +15,13 @@ The public API is:
 Structured-output parsing
 --------------------------
 Models are asked to produce JSON. In practice they often wrap it in prose,
-markdown fences, or produce malformed JSON. We use a three-stage parser:
+markdown fences, return an array of objects, or produce malformed JSON. We
+use a staged parser:
 
   Stage 1: json.loads(text) — works if the model returned bare JSON.
-  Stage 2: extract the first {...} block with a regex, then json.loads.
-  Stage 3: extract ```json ... ``` fence content, then json.loads.
+  Stage 2: extract ```json ... ``` fence content, then parse.
+  Stage 3: extract balanced JSON objects from prose, then parse.
+  Stage 4: normalize a Qwen grounding-tag response.
   Fallback: store {\"caption\": text, \"parse_error\": true} and set
             parse_failed=True on the Candidate.
 
@@ -161,27 +163,32 @@ def get_prompt_id(model: str, level: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Structured-output parsing (3-stage)
+# Structured-output parsing
 # ---------------------------------------------------------------------------
-
-# Regex to find the outermost {...} block
-_JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
 # Regex for ```json ... ``` fences
 _CODE_FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL | re.IGNORECASE)
 # Regex for Qwen grounding tags: <ref>text</ref><box>[[x1,y1,x2,y2]]</box>
 _QWEN_BOX_RE = re.compile(r"<ref>[^<]*</ref><box>(\[\[.*?\]\])</box>", re.DOTALL)
 
 
+def _normalise_parsed_value(result: Any) -> dict | None:
+    if isinstance(result, dict):
+        return result
+    if isinstance(result, list) and result and all(isinstance(item, dict) for item in result):
+        return {"objects": result}
+    return None
+
+
 def _try_parse(text: str) -> dict | None:
-    """Attempt json.loads; return None on failure."""
+    """Parse a JSON object or an array of object records."""
     try:
-        result = json.loads(text)
-        if isinstance(result, dict):
+        result = _normalise_parsed_value(json.loads(text))
+        if result is not None:
             return result
     except (json.JSONDecodeError, ValueError):
         try:
-            result = ast.literal_eval(text)
-            if isinstance(result, dict):
+            result = _normalise_parsed_value(ast.literal_eval(text))
+            if result is not None:
                 return result
         except (SyntaxError, ValueError, TypeError):
             pass
@@ -314,11 +321,12 @@ class ParseResult:
 
 
 def parse_structured_output(text: str) -> ParseResult:
-    """Three-stage JSON parser with free-text fallback.
+    """Parse structured output with a free-text fallback.
 
-    Stage 1: json.loads(text) directly.
-    Stage 2: Extract the first {...} block via regex, then json.loads.
-    Stage 3: Extract ```json...``` fence content, then json.loads.
+    Stage 1: Parse JSON directly.
+    Stage 2: Parse a fenced JSON block.
+    Stage 3: Parse balanced JSON embedded in prose.
+    Stage 4: Normalize Qwen grounding tags.
     Fallback: Wrap raw text as {"caption": text, "parse_error": true}.
               Sets parse_failed=True. The text is NEVER dropped.
 

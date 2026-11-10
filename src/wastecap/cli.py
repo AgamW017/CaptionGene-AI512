@@ -19,6 +19,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -58,12 +59,15 @@ def _generate_scene(
     if rendered.system:
         gen_kwargs["system"] = rendered.system
 
-    raw: list[Candidate] = model.generate(
+    prompt = prompt_override or rendered.text
+    raw = _generate_with_repair(
+        model,
         image,
-        prompt_override or rendered.text,
+        prompt,
         n=n,
         prompt_id=rendered.prompt_id,
-        **gen_kwargs,
+        gen_kwargs=gen_kwargs,
+        scene_level=True,
     )
     result: list[Candidate] = []
     for cand in raw:
@@ -78,6 +82,93 @@ def _generate_scene(
             )
         )
     return result
+
+
+_REPAIR_PROMPT = """Your previous response was not valid structured output.
+Return exactly one valid JSON object and nothing else.
+Do not use Markdown fences, XML tags, commentary, or a JSON array.
+Use this schema:
+{"objects":[{"object_id":"o1","category":"unknown","material":"unknown",
+"condition":"intact","count":1,"location":"unknown",
+"caption":"intact unknown object"}],"scene_context":"unknown"}
+Only include objects clearly visible in the image. Use "unknown" instead of guessing.
+"""
+
+
+def _generate_with_repair(
+    model: CaptionModel,
+    image: PILImage,
+    prompt: str,
+    *,
+    n: int,
+    prompt_id: str,
+    gen_kwargs: dict,
+    scene_level: bool,
+) -> list[Candidate]:
+    """Generate candidates and retry only outputs that fail structured parsing."""
+    from wastecap.prompts import parse_structured_output
+
+    raw = model.generate(image, prompt, n=n, prompt_id=prompt_id, **gen_kwargs)
+    repaired: list[Candidate] = []
+    for candidate in raw:
+        parsed = parse_structured_output(candidate.text)
+        if not parsed.parse_failed:
+            repaired.append(
+                candidate.model_copy(
+                    update={
+                        "parse_failed": False,
+                        "raw_parsed": parsed.raw_parsed,
+                        "grounding_boxes": parsed.grounding_boxes,
+                    }
+                )
+            )
+            continue
+
+        retry_kwargs = dict(gen_kwargs)
+        retry_kwargs["max_new_tokens"] = 256
+        retry = model.generate(
+            image,
+            _REPAIR_PROMPT,
+            n=1,
+            prompt_id=f"{prompt_id}_repair",
+            **retry_kwargs,
+        )
+        retry_candidate = retry[0] if retry else candidate
+        retry_parsed = parse_structured_output(retry_candidate.text)
+        if retry_parsed.parse_failed:
+            logger.warning(
+                "Structured parse failed after repair for model=%s prompt=%s raw=%r",
+                candidate.model,
+                prompt_id,
+                candidate.text[:240],
+            )
+            repaired.append(
+                candidate.model_copy(
+                    update={
+                        "parse_failed": True,
+                        "raw_parsed": None,
+                        "grounding_boxes": parsed.grounding_boxes,
+                    }
+                )
+            )
+        else:
+            normalized = retry_parsed.data
+            if scene_level and "objects" not in normalized and "category" in normalized:
+                normalized = {
+                    "objects": [normalized],
+                    "scene_context": "unknown",
+                }
+            repaired.append(
+                retry_candidate.model_copy(
+                    update={
+                        "text": json.dumps(normalized),
+                        "parse_failed": False,
+                        "raw_parsed": normalized,
+                        "grounding_boxes": retry_parsed.grounding_boxes,
+                    }
+                )
+            )
+    return repaired
 
 
 def _generate_objects(
@@ -100,8 +191,14 @@ def _generate_objects(
         if rendered.system:
             gen_kwargs["system"] = rendered.system
 
-        raw: list[Candidate] = model.generate(
-            crop, rendered.text, n=n, prompt_id=rendered.prompt_id, **gen_kwargs
+        raw: list[Candidate] = _generate_with_repair(
+            model,
+            crop,
+            rendered.text,
+            n=n,
+            prompt_id=rendered.prompt_id,
+            gen_kwargs=gen_kwargs,
+            scene_level=False,
         )
         for cand in raw:
             pr = parse_structured_output(cand.text)

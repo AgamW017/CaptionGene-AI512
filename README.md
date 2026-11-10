@@ -51,6 +51,12 @@ export WASTECAP_QUANTIZE=4bit
 streamlit run app/main.py
 ```
 
+The CLI and Curate generation path make one deterministic repair attempt when
+a backend returns malformed structured output. Successful repairs are stored
+as normalized JSON; irreparable raw text remains flagged for review and is
+never treated as valid structured data. The original model output is logged
+when both attempts fail.
+
 The mock backend is the supported default for development and tests. Dataset
 downloads are separate, bounded scripts and are never performed by tests.
 

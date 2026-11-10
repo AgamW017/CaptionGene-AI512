@@ -163,6 +163,13 @@ class TestParseStage1Direct:
         assert result.data["category"] == "can"
         assert result.data["material"] == "metal"
 
+    def test_json_array_of_objects_is_wrapped(self) -> None:
+        result = parse_structured_output(
+            '[{"object_id":"o1","category":"bottle","material":"plastic","caption":"bottle"}]'
+        )
+        assert not result.parse_failed
+        assert result.data["objects"][0]["category"] == "bottle"
+
 
 # ---------------------------------------------------------------------------
 # parse_structured_output — vocabulary coercion
