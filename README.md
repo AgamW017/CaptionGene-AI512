@@ -102,32 +102,71 @@ when both attempts fail.
 The mock backend is the supported default for development and tests. Dataset
 downloads are separate, bounded scripts and are never performed by tests.
 
-## One-command data and model setup
+## Complete real-data setup: 100 images from each dataset
 
-Use the orchestrator to download all three dataset sources, ingest them, and
-optionally cache all three Hugging Face model repositories. It is resumable:
-the existing download scripts skip files already present.
+The supported public sources and their official locations are:
 
-Install the base project and the ML dependencies first:
+| Dataset | Download location | Local output | License/terms |
+|---|---|---|---|
+| TACO | [official TACO repository](https://github.com/pedropro/TACO) and Flickr URLs in its annotations | `data/raw/taco/` | CC BY 4.0 |
+| ZeroWaste-F | [official ZeroWaste repository](https://github.com/dbash/zerowaste) / linked Google Drive archive | `data/raw/zerowaste/` | Research use, non-commercial |
+| COCO 2017 subset | [official COCO site](https://cocodataset.org/) | `data/raw/coco/` | CC BY 4.0 |
+
+The command below downloads **100 images from each source**, ingests up to
+100 records per source, validates the source counts, and downloads all three
+model repositories. It is resumable: existing files and Hugging Face cache
+entries are reused.
 
 ```bash
 python -m pip install -e '.[ml]'
 python -m pip install gdown
+python scripts/setup_all.py \
+  --limit 100 \
+  --download-models \
+  --yes
 ```
 
-Run a bounded 100-image-per-source setup:
+Dataset-specific behavior:
+
+- TACO downloads 100 annotated Flickr images and `annotations.json`.
+- ZeroWaste downloads the archive, then extracts 100 images per available
+  split; the ingest validator requires at least 100 ZeroWaste records total.
+- COCO downloads the 100-image waste-relevant validation subset and its
+  annotations archive.
+- Records are materialized under `data/processed/images/`, indexed in
+  `data/db/wastecap.db`, and split deterministically into train/val/test.
+
+Preview everything without changing files:
 
 ```bash
-python scripts/setup_all.py --limit 100 --download-models --yes
+python scripts/setup_all.py --limit 100 --download-models --dry-run
 ```
 
-Run all three models sequentially on the ingested training images:
+If ZeroWaste cannot be fetched automatically, download the official archive
+from its repository/Google Drive link and save it as
+`data/raw/zerowaste/zerowaste-f.zip`, then rerun the same command.
+
+### Run all three models on all ingested records
+
+This runs sequentially over the full ingested set (up to 300 records), not
+just the train split:
 
 ```bash
 WASTECAP_DEVICE=cuda WASTECAP_QUANTIZE=4bit \
 python scripts/setup_all.py \
   --limit 100 \
   --download-models \
+  --run-models \
+  --yes
+```
+
+For a quick model smoke run, cap generation independently:
+
+```bash
+WASTECAP_DEVICE=cuda WASTECAP_QUANTIZE=4bit \
+python scripts/setup_all.py \
+  --limit 100 \
+  --run-limit 3 \
   --run-models \
   --yes
 ```
@@ -143,7 +182,7 @@ python scripts/setup_all.py \
   --yes
 ```
 
-The full run can require tens of gigabytes: COCO annotations/images,
+The full dataset run can require tens of gigabytes: COCO annotations/images,
 ZeroWaste-F (research-use-only, about 1 GB archive), TACO images, and three
 model repositories. Use `--dry-run` first. The script runs models one at a
 time so model weights do not compete for GPU memory. LLaVA-1.5-7B may require
@@ -153,6 +192,14 @@ ZeroWaste-F is distributed through Google Drive. If its step fails, install
 `gdown` as shown above or download the official archive manually to
 `data/raw/zerowaste/zerowaste-f.zip`, then rerun the command. Do not commit
 datasets, model weights, SQLite state, or generated results.
+
+Model cache locations are normally under `~/.cache/huggingface/hub/`. Verify
+the GPU before a real run:
+
+```bash
+nvidia-smi
+python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
+```
 
 ## Dataset preparation and frozen splits
 
@@ -194,7 +241,44 @@ The current local snapshot has 106 records but only one approved record and no
 approved validation records. A complete validation benchmark therefore cannot
 be claimed until a human reviewer approves the validation set.
 
-## Short demo video
+## Demonstrating every required feature from SPEC.md
+
+Use the mock backend first for a reliable product demonstration, then repeat
+generation with the real models. Start from the repository root:
+
+```bash
+export WASTECAP_BACKEND=mock
+export WASTECAP_DEVICE=cpu
+streamlit run app/main.py --server.headless true --server.port 8501
+```
+
+Open [http://localhost:8501](http://localhost:8501), then follow this script:
+
+| SPEC.md requirement | Demonstration |
+|---|---|
+| Upload/select images and metadata | Curate → select an ingested TACO, ZeroWaste, and COCO image; show source, license, dimensions, split, and objects. |
+| Select model and prompt | Curate → switch Mock, Qwen2.5-VL, BLIP-2, and LLaVA; show the prompt override and model status. |
+| Generate candidates | Generate one candidate, then multiple candidates; show raw text, parse status, and timestamps. |
+| Edit/approve/reject/regenerate | Review → edit a caption, add reviewer/notes, approve one, reject one, and regenerate another. |
+| Structured fields | Review → show category, material, condition, count, location, and scene context. |
+| Quality/filtering | Review → filter by source, split, status, model, and parse failures; show quality flags and CLIPScore when computed. |
+| Side-by-side model comparison | Compare → select an image and display BLIP-2, Qwen2.5-VL, and LLaVA cards together, including unavailable/error states. |
+| Grounded sorting instructions | Instructions → select an object, show its highlighted bbox/mask, edit the instruction, and approve it. |
+| Validated exports | Export → validate, then download one JSON, JSONL, and CSV file per split. |
+| Dataset statistics | Stats → show image count, source/class distribution, approval rate, captions per class, and review progress. |
+| Baseline evaluation | Run `scripts/run_baseline.py`, then open the generated JSON and markdown error-analysis table. |
+
+After the UI walkthrough, run the reproducibility checks:
+
+```bash
+python scripts/validate_final_splits.py
+python scripts/smoke_mock.py
+python scripts/demo_mock.py
+pytest -q
+ruff check . && ruff format --check .
+```
+
+### Short demo video
 
 1. Start the app with `WASTECAP_BACKEND=mock` and `WASTECAP_DEVICE=cpu`.
 2. Show the dashboard and the current record/status counts.

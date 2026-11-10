@@ -84,6 +84,27 @@ def _ingest(limit: int | None, dry_run: bool) -> None:
     _run(command)
 
 
+def _validate_source_counts(expected: int | None, dry_run: bool) -> None:
+    if dry_run:
+        return
+    sys.path.insert(0, str(ROOT / "src"))
+    from wastecap.store import init_db, list_records
+
+    records = list_records(db_path=init_db())
+    counts = {
+        source: sum(record.source.value == source for record in records)
+        for source in ("taco", "zerowaste", "coco")
+    }
+    logger.info("Ingested source counts: %s", counts)
+    if expected is not None:
+        missing = {source: count for source, count in counts.items() if count < expected}
+        if missing:
+            raise RuntimeError(
+                f"Expected at least {expected} records from each dataset, but counts are "
+                f"{counts}. Missing: {missing}. Check download logs and rerun."
+            )
+
+
 def _run_models(models: list[str], limit: int | None, dry_run: bool) -> None:
     if dry_run:
         for model in models:
@@ -107,14 +128,14 @@ def _run_models(models: list[str], limit: int | None, dry_run: bool) -> None:
             "--model",
             model,
             "--split",
-            "train",
+            "all",
             "--level",
             "scene",
             "--n",
             "1",
             "--verbose",
         ]
-        if limit is not None:
+        if limit is not None and limit > 0:
             command.extend(["--limit", str(limit)])
         logger.info("Running %s sequentially; stop other model processes first", model)
         _run(command, env=env)
@@ -126,6 +147,12 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--limit", type=int, default=100, help="Images per source.")
+    parser.add_argument(
+        "--run-limit",
+        type=int,
+        default=None,
+        help="Optional total record cap per model; default runs every ingested record.",
+    )
     parser.add_argument(
         "--full",
         action="store_true",
@@ -169,10 +196,11 @@ def main() -> None:
     logger.info("Preparing datasets with limit=%s", limit or "all")
     _download_datasets(limit, args.dry_run)
     _ingest(limit, args.dry_run)
+    _validate_source_counts(limit, args.dry_run)
     if args.download_models:
         _download_models(args.models, args.dry_run)
     if args.run_models:
-        _run_models(args.models, limit, args.dry_run)
+        _run_models(args.models, args.run_limit, args.dry_run)
     logger.info("Setup complete.")
 
 
