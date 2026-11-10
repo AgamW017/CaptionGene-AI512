@@ -347,6 +347,23 @@ class TestParseFallback:
         result = parse_structured_output("garbage text")
         assert result.raw_parsed is None
 
+    def test_fenced_json_is_parsed_before_prose(self) -> None:
+        result = parse_structured_output(
+            'Here is the result:\n```json\n{"caption":"plastic bottle"}\n```'
+        )
+        assert not result.parse_failed
+        assert result.data["caption"] == "plastic bottle"
+
+    def test_json_embedded_in_prose_is_parsed(self) -> None:
+        result = parse_structured_output('Result: {"caption":"metal can"} Thanks.')
+        assert not result.parse_failed
+        assert result.data["caption"] == "metal can"
+
+    def test_python_dict_output_is_parsed_safely(self) -> None:
+        result = parse_structured_output("{'caption': 'paper wrapper', 'count': 1}")
+        assert not result.parse_failed
+        assert result.data["caption"] == "paper wrapper"
+
     def test_empty_string_falls_back(self) -> None:
         result = parse_structured_output("")
         assert result.parse_failed is True
@@ -393,9 +410,10 @@ class TestGroundingBoxExtraction:
     def test_grounding_present_on_fallback_text(self) -> None:
         text = "plain text <ref>bottle</ref><box>[[10,20,30,40]]</box>"
         result = parse_structured_output(text)
-        # parse_failed=True but boxes still extracted
-        assert result.parse_failed is True
+        # Grounding tags are a valid structured model response.
+        assert result.parse_failed is False
         assert result.grounding_boxes is not None
+        assert result.data["objects"][0]["caption"] == "bottle"
 
 
 # ---------------------------------------------------------------------------

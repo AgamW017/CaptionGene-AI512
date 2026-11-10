@@ -26,13 +26,13 @@ for _path in (_PROJECT_ROOT, _SRC_ROOT):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-from app.components.ui import inject_styles, page_header  # noqa: E402
+from app.components.ui import inject_styles, page_header, section_heading  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
 st.set_page_config(page_title="Compare — WasteCap", page_icon="⚖️", layout="wide")
 
-_COMPARE_MODELS = ["blip2", "qwen_vl"]
+_COMPARE_MODELS = ["blip2", "qwen_vl", "llava"]
 
 
 @st.cache_resource
@@ -75,13 +75,11 @@ def _render_model_col(model_name: str, candidate, score) -> None:
     """Render one model's best candidate in its column."""
     from wastecap.quality.hallucination import get_hallucination_flags
 
-    st.subheader(f"🤖 {model_name}")
+    model_labels = {"blip2": "BLIP-2", "qwen_vl": "Qwen2.5-VL", "llava": "LLaVA"}
+    st.markdown(f"### {model_labels.get(model_name, model_name)}")
 
     if candidate is None:
-        st.info(
-            f"No candidate from **{model_name}** yet.  \n"
-            "Go to the Curate page, select this model, and click Generate."
-        )
+        st.caption("No candidate yet. Generate this backend from Curate to populate this column.")
         return
 
     # Score badge
@@ -131,7 +129,7 @@ def main() -> None:
     page_header(
         "Model lab",
         "Compare candidates",
-        "Inspect BLIP-2 and Qwen2.5-VL side by side. Approval happens in Review.",
+        "A consistent evidence board for BLIP-2, Qwen2.5-VL, and LLaVA outputs.",
     )
 
     db_path = _get_db_path()
@@ -149,7 +147,7 @@ def main() -> None:
         sel_split = st.selectbox("Split", split_opts, key="cmp_split")
         sel_status = st.selectbox("Status", status_opts, key="cmp_status")
         only_both = st.checkbox(
-            "Only records with both models",
+            "Only records with all selected models",
             value=False,
             key="cmp_both",
             help="Hide records where one model hasn't generated yet.",
@@ -182,10 +180,7 @@ def main() -> None:
         ]
 
     if not records:
-        st.info(
-            "No records have candidates from the compare models yet. "
-            "Go to the Curate page and generate with blip2 / qwen_vl."
-        )
+        st.info("No comparison candidates yet. Generate one or more backends from Curate.")
         return
 
     # ── Pagination ────────────────────────────────────────────────────────
@@ -213,6 +208,7 @@ def main() -> None:
     from wastecap.quality.hallucination import flag_all_candidates
     from wastecap.quality.scoring import score_candidate
 
+    section_heading("Evidence board", f"{len(records)} record(s) · three model columns")
     for rec in page_records:
         with st.expander(
             f"`{rec.image_id}` · {rec.source.value} · **{rec.status.value}**",
@@ -238,7 +234,7 @@ def main() -> None:
             rec_flagged = flag_all_candidates(rec)
             best_per_model = best_candidate_per_model(rec_flagged.candidates)
 
-            img_col, blip_col, qwen_col = st.columns([1, 1, 1])
+            img_col, blip_col, qwen_col, llava_col = st.columns([1, 1, 1, 1])
 
             with img_col:
                 from app.components.image_viewer import image_viewer, load_image
@@ -274,6 +270,11 @@ def main() -> None:
                 cand = best_per_model.get("qwen_vl")
                 score = score_candidate(cand) if cand else None
                 _render_model_col("qwen_vl", cand, score)
+
+            with llava_col:
+                cand = best_per_model.get("llava")
+                score = score_candidate(cand) if cand else None
+                _render_model_col("llava", cand, score)
 
 
 main()

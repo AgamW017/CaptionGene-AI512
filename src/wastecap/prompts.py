@@ -30,6 +30,7 @@ preserved in raw_parsed for inspection.
 
 from __future__ import annotations
 
+import ast
 import json
 import logging
 import os
@@ -178,7 +179,12 @@ def _try_parse(text: str) -> dict | None:
         if isinstance(result, dict):
             return result
     except (json.JSONDecodeError, ValueError):
-        pass
+        try:
+            result = ast.literal_eval(text)
+            if isinstance(result, dict):
+                return result
+        except (SyntaxError, ValueError, TypeError):
+            pass
     return None
 
 
@@ -244,6 +250,59 @@ def _extract_grounding_boxes(text: str) -> list[list[float]] | None:
     return boxes if boxes else None
 
 
+def _grounding_data(text: str, boxes: list[list[float]] | None) -> dict | None:
+    """Convert Qwen grounding tags into the same structured shape as JSON."""
+    if not boxes:
+        return None
+    refs = re.findall(r"<ref>\s*([^<]+?)\s*</ref>", text, flags=re.IGNORECASE)
+    objects = [
+        {
+            "object_id": f"o{index}",
+            "category": "unknown",
+            "material": "unknown",
+            "condition": "intact",
+            "count": 1,
+            "location": "grounded image region",
+            "caption": ref.strip(),
+        }
+        for index, ref in enumerate(refs[: len(boxes)], 1)
+    ]
+    return {
+        "objects": objects,
+        "grounding_boxes": boxes,
+        "caption": " ".join(obj["caption"] for obj in objects),
+    }
+
+
+def _extract_json_candidates(text: str) -> list[str]:
+    """Extract balanced JSON objects, including objects inside prose."""
+    candidates: list[str] = []
+    starts = [index for index, char in enumerate(text) if char == "{"]
+    for start in starts:
+        depth = 0
+        in_string = False
+        escaped = False
+        for index in range(start, len(text)):
+            char = text[index]
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    in_string = False
+            elif char == '"':
+                in_string = True
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    candidates.append(text[start : index + 1])
+                    break
+    return candidates
+
+
 @dataclass
 class ParseResult:
     """Result of parsing a model's raw text output."""
@@ -279,17 +338,24 @@ def parse_structured_output(text: str) -> ParseResult:
     # Stage 1: direct parse
     parsed = _try_parse(stripped)
 
-    # Stage 2: extract outermost {...} block
-    if parsed is None:
-        m = _JSON_BLOCK_RE.search(stripped)
-        if m:
-            parsed = _try_parse(m.group(0))
-
-    # Stage 3: code fence extraction
+    # Stage 2: parse fenced JSON before searching prose. This avoids a
+    # greedy prose match swallowing multiple unrelated brace blocks.
     if parsed is None:
         m2 = _CODE_FENCE_RE.search(stripped)
         if m2:
             parsed = _try_parse(m2.group(1))
+
+    # Stage 3: extract balanced JSON from prose.
+    if parsed is None:
+        for candidate in _extract_json_candidates(stripped):
+            parsed = _try_parse(candidate)
+            if parsed is not None:
+                break
+
+    # Grounding-tag output is a valid structured result even though it is not
+    # JSON. Preserve the raw text and expose normalized object data.
+    if parsed is None and grounding_boxes:
+        parsed = _grounding_data(stripped, grounding_boxes)
 
     # Fallback: free text
     if parsed is None:

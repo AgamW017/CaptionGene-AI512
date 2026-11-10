@@ -62,7 +62,7 @@ def caption_card(
         # ── Parse-failure warning ──
         if candidate.parse_failed:
             st.warning(
-                "⚠️ Structured parse failed — raw text shown. Review before approving.",
+                "Structured fields unavailable — raw model text shown. Review before approving.",
                 icon="⚠️",
             )
 
