@@ -102,6 +102,58 @@ when both attempts fail.
 The mock backend is the supported default for development and tests. Dataset
 downloads are separate, bounded scripts and are never performed by tests.
 
+## One-command data and model setup
+
+Use the orchestrator to download all three dataset sources, ingest them, and
+optionally cache all three Hugging Face model repositories. It is resumable:
+the existing download scripts skip files already present.
+
+Install the base project and the ML dependencies first:
+
+```bash
+python -m pip install -e '.[ml]'
+python -m pip install gdown
+```
+
+Run a bounded 100-image-per-source setup:
+
+```bash
+python scripts/setup_all.py --limit 100 --download-models --yes
+```
+
+Run all three models sequentially on the ingested training images:
+
+```bash
+WASTECAP_DEVICE=cuda WASTECAP_QUANTIZE=4bit \
+python scripts/setup_all.py \
+  --limit 100 \
+  --download-models \
+  --run-models \
+  --yes
+```
+
+Run the complete available datasets instead:
+
+```bash
+WASTECAP_DEVICE=cuda WASTECAP_QUANTIZE=4bit \
+python scripts/setup_all.py \
+  --full \
+  --download-models \
+  --run-models \
+  --yes
+```
+
+The full run can require tens of gigabytes: COCO annotations/images,
+ZeroWaste-F (research-use-only, about 1 GB archive), TACO images, and three
+model repositories. Use `--dry-run` first. The script runs models one at a
+time so model weights do not compete for GPU memory. LLaVA-1.5-7B may require
+more than 4 GB VRAM even with 4-bit quantization.
+
+ZeroWaste-F is distributed through Google Drive. If its step fails, install
+`gdown` as shown above or download the official archive manually to
+`data/raw/zerowaste/zerowaste-f.zip`, then rerun the command. Do not commit
+datasets, model weights, SQLite state, or generated results.
+
 ## Dataset preparation and frozen splits
 
 The documented source loaders support TACO, ZeroWaste-F, and a COCO
